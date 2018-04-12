@@ -88,7 +88,7 @@ cd /usr/local/go/pkg
 # reclaim 177 MiB:
 run rm -rf bootstrap/ obj
 cd ..
-rm -rf doc  # another 4.3MiB
+rm -rf doc # another 4.3MiB
 
 cd "$startdir"
 
