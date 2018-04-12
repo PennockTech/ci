@@ -1,0 +1,19 @@
+#!/bin/sh -eu
+
+: "${HOME_HTTP_PROXY:=http://192.168.120.21:3128/}"
+: "${CI_COLOR:=purple}"
+: "${PT_DOCKER_BASETAG:=pennocktech/ci}"
+
+# shellcheck source=tools/lib.sh disable=SC2034
+. "$(dirname "$0")/lib.sh" "$0" "$@"
+
+docker_build() {
+  run docker build \
+    --build-arg "http_proxy=$HOME_HTTP_PROXY" \
+    --file "docker-${CI_COLOR}/Dockerfile" \
+    "$@" \
+    .
+}
+
+docker_build --target rootstage --tag "${PT_DOCKER_BASETAG}:${CI_COLOR}-root"
+docker_build --tag "${PT_DOCKER_BASETAG}:${CI_COLOR}"

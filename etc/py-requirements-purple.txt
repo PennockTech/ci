@@ -1,0 +1,31 @@
+# Development / Audit / CI tests
+flake8
+pycodestyle
+pylint
+tox
+
+# Libs
+GitPython       # git; import as: git
+Jinja2          # Templates; import as: jinja2
+PyYAML          # import as: yaml
+dnspython       # DNS; normally import as: dns.resolver   (others available)
+filemagic       # identifying files; for "chromium_profiles_vacuum"
+furl            # URL manipulation
+keyring         # Access to platform keyring/keychain/whatever
+requests        # HTTP Everything
+paramiko        # SSH
+psutil          # Process state
+pytz            # IANA (nee Olson) Timezone DB handling
+six             # Py 2/3 compatibility aid; smoothes over differences
+termcolor       # named access to ANSI colors
+watchdog        # FS notifications
+webcolors
+
+# Cloud SDKs (so libs too)
+boto3                           # AWS
+google-api-python-client        # GCE; import as: googleapiclient
+
+# Amazon
+awscli
+s3cmd
+python-magic
