@@ -25,7 +25,7 @@ run apk add \
   git mercurial \
   coreutils tar \
   binutils chrpath file \
-  curl wget rsync socat \
+  curl wget rsync socat jq \
   pcre-tools ncurses \
   clang gcc make linux-headers libffi libffi-dev \
   zip xz \

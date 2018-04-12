@@ -22,3 +22,15 @@ python, go and much more.
 Creates:
  * `pennocktech/ci:purple-root`: everything installed, uid is `root`
  * `pennocktech/ci:purple`: run-time user is `ci`
+
+Known issues:
+ * build style is incompatible with Docker build-step caching, needs a rethink
+   to find a decent middle-ground while still avoiding the 20-line chained-&&
+   pattern
+ * missing docker and kubectl still
+ * too large
+
+I do development work _on_ Zsh, so the usual suspects such as "remove fancy
+shells", are not really tenable.  I mostly wanted to get an image with
+up-to-date pip out, before the PyPI cut-over, so haven't yet prioritized sane
+shrinkage.
