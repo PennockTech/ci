@@ -50,8 +50,6 @@ for gid in $RUNTIME_SUPGIDS; do
   run adduser "$RUNTIME_USER" "$gname"
 done
 
-rm -v /var/cache/apk/*
-
 if [ -d pkix ]; then
   run mkdir -pv /usr/local/share/ca-certificates
   run cp -v pkix/*.crt /usr/local/share/ca-certificates/./
@@ -84,7 +82,13 @@ GOARCH="$(go env GOARCH)" \
 GOHOSTOS="$(go env GOHOSTOS)" \
 GOHOSTARCH="$(go env GOHOSTARCH)" \
   ./make.bash
-apk del go
+run apk del go
+
+cd /usr/local/go/pkg
+# reclaim 177 MiB:
+run rm -rf bootstrap/ obj
+cd ..
+rm -rf doc  # another 4.3MiB
 
 cd "$startdir"
 
@@ -97,3 +101,5 @@ export GOPATH="$SHARED_GO_AREA"
 
 user_bin_go version
 user_bin_go get golang.org/x/tools/cmd/...
+
+rm -v /var/cache/apk/*
