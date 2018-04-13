@@ -145,12 +145,33 @@ have_cmd() {
 
 # Git Utilities {{{
 
-if have_cmd "$GIT_CMD" && git -C "$progdir" rev-parse --is-inside-git-dir >/dev/null 2>&1; then
+# This seems simple enough, but when invoked from a git hook, GIT_DIR=.git is
+# in environ, which (1) breaks cryptically when using `git -C $somedir` because
+# the explicit $GIT_DIR is not in that directory, and (2) even if we resolved
+# GIT_DIR to be absolute at the start of this lib, that would still break this
+# test.  So we want a locally unset GIT_DIR just for this check.
+git_is_inside_worktree() {
+  local check_dir="${1:?}"
+  local output
+  output="$(
+    unset GIT_DIR
+    git -C "$check_dir" rev-parse --is-inside-work-tree
+  )"
+  [ "${output:-.}" = "true" ]
+}
+
+if have_cmd "$GIT_CMD" && git_is_inside_worktree "$progdir"; then
   have_git=true
-  REPO_ROOT="$(git -C "$progdir" rev-parse --show-toplevel)"
+  REPO_ROOT="$(
+    unset GIT_DIR
+    git -C "$progdir" rev-parse --show-toplevel
+  )"
 
   cd_to_repo_root() {
-    cd "$(git -C "$progdir" rev-parse --show-toplevel)"
+    cd "$(
+      unset GIT_DIR
+      git -C "$progdir" rev-parse --show-toplevel
+    )"
   }
 
   lgit() { git -C "$REPO_ROOT" "$@"; }
