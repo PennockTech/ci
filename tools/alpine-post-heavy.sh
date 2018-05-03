@@ -18,12 +18,20 @@ startdir=/tmp
 cd "$startdir"
 
 user_bin_go() {
-  su -s /bin/sh bin <<EOGOGET
+  info "go $*"
+  (
+    cat <<EOGOGET
 export GOPATH='$SHARED_GO_AREA'
 export PATH='${SHARED_GO_AREA}/bin:/usr/local/go/bin${PATH:+:}${PATH:-}'
 export HOME='$SHARED_GO_AREA'
-"$GO_CMD" $@
 EOGOGET
+    if [ -n "${CGO_ENABLED:-}" ]; then
+      echo "export CGO_ENABLED='${CGO_ENABLED:?}'"
+    fi
+    printf '"%s"' "$GO_CMD"
+    for x; do printf " '%s'" "$(printf '%s' "$x" | sed "s/'/'\"'\"'/")"; done
+    printf '\n'
+  ) | su -s /bin/sh bin
 }
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~8< Dep >8~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -54,6 +62,9 @@ user_bin_go get \
   golang.org/x/text/... \
   golang.org/x/sys/...
 user_bin_go get github.com/pkg/errors github.com/lib/pq
+# make a binary which might be copied into a final image
+user_bin_go get -d github.com/tianon/gosu
+CGO_ENABLED=0 user_bin_go install -ldflags "-d -s -w" github.com/tianon/gosu
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~8< Others >8~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
