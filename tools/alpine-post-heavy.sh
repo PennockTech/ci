@@ -66,6 +66,14 @@ user_bin_go get github.com/pkg/errors github.com/lib/pq
 user_bin_go get -d github.com/tianon/gosu
 CGO_ENABLED=0 user_bin_go install -ldflags "-d -s -w" github.com/tianon/gosu
 
+# We also want ~/go to pre-exist, so that if Docker runs as root and populates
+# a src/ path, that it doesn't block dep from creating ~/go/pkg/dep/sources; it
+# can still block the runtime user from downloading other sources though.
+# Should probably "ADD --chown" the sources, but --chown doesn't interpolate
+# (at least as of Docker 18.04) so that's harder to ensure.  This at least
+# should make things a little easier.
+mkdir -pv "$HOME/go/src" "$HOME/go/pkg" "$HOME/go/bin"
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~8< Others >8~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Skipping "heroku": requires node runtime
@@ -113,7 +121,7 @@ allow-version-check
 EODIRMNGR
 
 chmod -R go-rwx "$pgpdir"
-chown -R "${RUNTIME_USER}:${RUNTIME_GROUP}" "$pgpdir"
+chown -R "${RUNTIME_USER}:${RUNTIME_GROUP}" "/home/${RUNTIME_USER}"
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~8< User config >8~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
