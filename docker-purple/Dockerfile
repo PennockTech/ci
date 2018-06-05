@@ -18,6 +18,7 @@
 ARG GOLANG_VERSION=1.10.2
 ARG GOLANG_SRC_SHASUM=6264609c6b9cd8ed8e02ca84605d727ce1898d74efa79841660b2e3e985a98bd
 ARG DEP_VERSION=0.4.1
+ARG PT_VARIANT=purple
 ARG RUNTIME_USER=ci
 ARG RUNTIME_GECOS='Continuous Integration'
 ARG RUNTIME_UID=1001
@@ -43,6 +44,7 @@ FROM alpine as rootstage
 ARG GOLANG_VERSION
 ARG GOLANG_SRC_SHASUM
 ARG DEP_VERSION
+ARG PT_VARIANT
 ARG RUNTIME_USER
 ARG RUNTIME_GECOS
 ARG RUNTIME_UID
@@ -61,15 +63,16 @@ ENV RUNTIME_USER=${RUNTIME_USER}
 COPY pkix/* /tmp/pkix/
 COPY tools/* /tmp/tools/
 COPY etc/* /tmp/etc/
-RUN PT_VARIANT=purple VERBOSE=2 /tmp/tools/alpine-heavy.sh
-RUN PT_VARIANT=purple VERBOSE=2 /tmp/tools/alpine-post-heavy.sh
+RUN PT_VARIANT="${PT_VARIANT}" VERBOSE=2 /tmp/tools/alpine-heavy.sh
+COPY tools/prepared-final-stage.sh /home/${RUNTIME_USER}/prepared-final-stage.sh
 
 env GOPATH=${SHARED_GO_AREA}
 env PATH="${SHARED_GO_AREA}/bin:/usr/local/go/bin:${PATH}"
 
 LABEL maintainer="noc+docker+ci@pennock-tech.com"
-LABEL com.pennock-tech.name="Pennock Tech Continuous Integration (root-stage)"
+LABEL com.pennock-tech.name="Pennock Tech Continuous Integration - $PT_VARIANT (root-stage)"
 LABEL com.pennock-tech.baseimage="alpine"
+LABEL com.pennock-tech.variant="${PT_VARIANT}"
 LABEL com.pennock-tech.versions.go="${GOLANG_VERSION}"
 LABEL com.pennock-tech.versions.dep="${DEP_VERSION}"
 LABEL com.pennock-tech.runtime.username="root"
@@ -90,21 +93,15 @@ USER ${RUNTIME_USER}
 ENV GOPATH=/home/${RUNTIME_USER}/go:${GOPATH}
 ENV PATH=/home/${RUNTIME_USER}/go/bin:${PATH}
 
-# Reconsider how this should fit in, whether or not command can be overridden,
-# when I delete scripts, etc.
-# NB: TOFU requires GnuPG built with sqlite support, which is not the case
-# for Alpine's package today.
-RUN gpg </dev/null --batch --import etc/pgp-keys/pgp-philpennock-noattr.asc \
-	&& echo "ACBB4324393ADE3515DA2DDA4D1E900E14C1CC04:6:" | gpg --import-ownertrust \
-	&& gpg --check-trustdb
-# && gpg --tofu-policy good ACBB4324393ADE3515DA2DDA4D1E900E14C1CC04
+RUN ./prepared-final-stage.sh && rm -fv ./prepared-final-stage.sh
 
 # Install any user-specific Go here
 
+ARG PT_VARIANT
 ARG RUNTIME_UID
 ARG RUNTIME_GID
 ARG RUNTIME_SUPGIDS
-LABEL com.pennock-tech.name="Pennock Tech Continuous Integration"
+LABEL com.pennock-tech.name="Pennock Tech Continuous Integration - ${PT_VARIANT}"
 LABEL com.pennock-tech.runtime.username="${RUNTIME_USER}"
 LABEL com.pennock-tech.runtime.uid="${RUNTIME_UID}"
 LABEL com.pennock-tech.runtime.gid="${RUNTIME_GID}"

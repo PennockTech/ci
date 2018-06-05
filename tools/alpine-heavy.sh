@@ -14,27 +14,73 @@
 startdir=/tmp
 cd "$startdir"
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~8< Packages >8~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 run apk update
-run apk upgrade
+run apk upgrade --no-cache
 
 # coreutils includes base64, sha256sum, etc (and normally also built into busybox)
 # need gcc, libffi etc for python packages
-run apk add \
-  musl-dev \
-  openssl gnutls-utils gnupg \
-  git mercurial \
-  coreutils tar \
-  binutils chrpath file \
-  curl wget rsync socat jq \
-  pcre-tools ncurses \
-  clang gcc make linux-headers libffi libffi-dev \
-  zip xz \
-  bash zsh vim groff less \
-  python3 python3-dev py-pip mailcap \
-  unbound unbound-libs unbound-dev \
-  github-cli bind-tools ldns-tools drill \
-  go
-# that go will be 1.9.4 but will let us bootstrap a current Go
+#
+# Any go will be dated but will let us bootstrap a current Go.
+# Eg, when first wrote this, this installed 1.9.4 which let us install 1.10
+# ourselves.
+#
+# Repetition in these is okay.
+readonly CriticalPackages="openssl curl jq git"
+readonly GoPackages="go musl-dev bash make" # bash/make for building local Go
+readonly NicerDebugPackages="zsh tar socat pcre-tools chrpath less file strace binutils"
+readonly PythonPackages="gcc make linux-headers libffi libffi-dev python3 python3-dev py-pip"
+readonly DNSPackages="unbound unbound-libs unbound-dev bind-tools ldns-tools drill"
+readonly CryptoPackages="openssl gnutls-utils gnupg"
+readonly RepoPackages="git mercurial github-cli"
+readonly KitchenSinkPackages="
+  $CriticalPackages
+  $GoPackages
+  $NicerDebugPackages
+  $PythonPackages
+  $DNSPackages
+  $CryptoPackages
+  $RepoPackages
+  musl-dev
+  coreutils
+  wget rsync
+  ncurses
+  clang
+  zip xz
+  bash zsh vim groff man
+  mailcap
+  docker
+"
+
+packages="$CriticalPackages"
+
+case "${PT_VARIANT:-heavy}" in
+pastel) ;;
+heavy | purple)
+  packages="$KitchenSinkPackages"
+  ;;
+pink)
+  packages="$packages $GoPackages $NicerDebugPackages"
+  ;;
+*)
+  die "unknown build package selection: '${PT_VARIANT}'"
+  ;;
+esac
+
+packages="$(printf '%s\n' "$packages" | xargs -n 1 | sort -u | xargs)"
+
+case $packages in
+*python*)
+  test -f "etc/py-requirements-${PT_VARIANT}.txt" || die "missing etc/py-requirements-${PT_VARIANT}.txt"
+  ;;
+esac
+
+# Deliberately not quoted; bare shell, no arrays, want expansion.
+# shellcheck disable=SC2086
+run apk add --no-cache $packages
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~8< User setup >8~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Installing Docker from upstream currently gets 18.02;
 # Alpine v3.7 has 17.12.1-r0 while edge (future v3.8) has 18.02.0-r0
@@ -50,56 +96,42 @@ for gid in $RUNTIME_SUPGIDS; do
   run adduser "$RUNTIME_USER" "$gname"
 done
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~8< Trust Stores >8~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# GnuPG stuff isolated to "if have gpg command"
+
 if [ -d pkix ]; then
   run mkdir -pv /usr/local/share/ca-certificates
   run cp -v pkix/*.crt /usr/local/share/ca-certificates/./
   run update-ca-certificates
 fi
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~8< System tuning >8~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 # Per docker-library/docker, persuade Go code to play with Docker hacks
 [ -e /etc/nsswitch.conf ] || echo 'hosts: files dns' >/etc/nsswitch.conf
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~8< Go >8~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~8< Per-command setup scripts >8~~~~~~~~~~~~~~~~~~~~~
 
-user_bin_go() {
-  su -s /bin/sh bin <<EOGOGET
-export GOPATH='$SHARED_GO_AREA'
-export PATH='${SHARED_GO_AREA}/bin:/usr/local/go/bin${PATH:+:}${PATH:-}'
-export HOME='$SHARED_GO_AREA'
-"$GO_CMD" $@
-EOGOGET
-}
+for section in go python gpg; do
+  if have_cmd "$section"; then
+    "$progdir/alpine-heavy-${section}.sh" "$@"
+  else
+    warn "no '${section}' command, skipping its setup"
+  fi
+done
 
-fn="go${GOLANG_VERSION}.src.tar.gz"
-download_to_tmp_sha256 "https://dl.google.com/go/${fn}" "$fn" "${GOLANG_SRC_SHASUM:?}"
-run tar -C /usr/local -zxBpf "/tmp/$fn"
-rm -f "/tmp/$fn"
+# Skipping "heroku": requires node runtime
+# Consider:
+#  * kubernetes
 
-cd /usr/local/go/src
-GOROOT_BOOTSTRAP="$(go env GOROOT)" \
-GOOS="$(go env GOOS)" \
-GOARCH="$(go env GOARCH)" \
-GOHOSTOS="$(go env GOHOSTOS)" \
-GOHOSTARCH="$(go env GOHOSTARCH)" \
-  ./make.bash
-run apk del go
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~8< User config >8~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-cd /usr/local/go/pkg
-# reclaim 177 MiB:
-run rm -rf bootstrap/ obj
-cd ..
-rm -rf doc # another 4.3MiB
+for F in /tmp/etc/dot.*; do
+  install -o "${RUNTIME_USER}" -m 0600 "$F" "/home/${RUNTIME_USER}/${F##*/dot}"
+done
 
-cd "$startdir"
-
-# The run-time user should have a GOPATH of $HOME/go:/opt/gotools and use the
-# first for all their stuff, but be able to pull from later locations, and
-# have that area's bin in $PATH
-run mkdir -pv "${SHARED_GO_AREA}/bin"
-run chown -R bin "${SHARED_GO_AREA}"
-export GOPATH="$SHARED_GO_AREA"
-
-user_bin_go version
-user_bin_go get golang.org/x/tools/cmd/...
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~8< Cleanup >8~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 rm -v /var/cache/apk/*
+cd /tmp
+rm -rf pkix tools etc

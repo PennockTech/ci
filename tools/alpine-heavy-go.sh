@@ -1,16 +1,8 @@
 #!/bin/sh -eu
 
 # These should be supplied by Docker
-: "${PT_VARIANT:?}" # purple
-: "${RUNTIME_USER:?}" "${RUNTIME_UID:?}" "${RUNTIME_GID:?}"
 : "${SHARED_GO_AREA:?}" # /opt/gotools
 : "${GOLANG_VERSION:?}" "${GOLANG_SRC_SHASUM:?}"
-: "${RUNTIME_GROUP:=$RUNTIME_USER}"
-: "${RUNTIME_GECOS:=$RUNTIME_USER}"
-: "${RUNTIME_SHELL:=/bin/sh}"
-
-# This should find a proper home
-: "${PT_GNUPG_TRUSTED_KEY:=0x4D1E900E14C1CC04}"
 
 # shellcheck source=tools/lib.sh disable=SC2034
 . "$(dirname "$0")/lib.sh" "$0" "$@"
@@ -34,6 +26,38 @@ EOGOGET
   ) | su -s /bin/sh bin
 }
 
+fn="go${GOLANG_VERSION}.src.tar.gz"
+download_to_tmp_sha256 "https://dl.google.com/go/${fn}" "$fn" "${GOLANG_SRC_SHASUM:?}"
+run tar -C /usr/local -zxBpf "/tmp/$fn"
+rm -f "/tmp/$fn"
+
+cd /usr/local/go/src
+GOROOT_BOOTSTRAP="$(go env GOROOT)" \
+GOOS="$(go env GOOS)" \
+GOARCH="$(go env GOARCH)" \
+GOHOSTOS="$(go env GOHOSTOS)" \
+GOHOSTARCH="$(go env GOHOSTARCH)" \
+  ./make.bash
+run apk del go
+
+cd /usr/local/go/pkg
+# reclaim 177 MiB:
+run rm -rf bootstrap/ obj
+cd ..
+rm -rf doc # another 4.3MiB
+
+cd "$startdir"
+
+# The run-time user should have a GOPATH of $HOME/go:/opt/gotools and use the
+# first for all their stuff, but be able to pull from later locations, and
+# have that area's bin in $PATH
+run mkdir -pv "${SHARED_GO_AREA}/bin"
+run chown -R bin "${SHARED_GO_AREA}"
+export GOPATH="$SHARED_GO_AREA"
+
+user_bin_go version
+user_bin_go get golang.org/x/tools/cmd/...
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~8< Dep >8~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 cd /tmp
@@ -45,12 +69,6 @@ chmod 0755 ./release/dep-linux-amd64
 mv -v ./release/dep-linux-amd64 /usr/local/bin/dep
 rmdir release
 dep version
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~8< Python >8~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-pip install --upgrade pip setuptools
-pip3 install --upgrade pip setuptools
-pip3 install -r "etc/py-requirements-${PT_VARIANT:?}.txt"
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~8< Go Packages >8~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -67,71 +85,11 @@ user_bin_go get -d github.com/tianon/gosu
 CGO_ENABLED=0 user_bin_go install -ldflags "-d -s -w" github.com/tianon/gosu
 
 # We also want ~/go to pre-exist, so that if Docker runs as root and populates
-# a src/ path, that it doesn't block dep from creating ~/go/pkg/dep/sources; it
+# a src/ path, it doesn't block dep from creating ~/go/pkg/dep/sources; it
 # can still block the runtime user from downloading other sources though.
 # Should probably "ADD --chown" the sources, but --chown doesn't interpolate
 # (at least as of Docker 18.04) so that's harder to ensure.  This at least
 # should make things a little easier.
 mkdir -pv "$HOME/go/src" "$HOME/go/pkg" "$HOME/go/bin"
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~8< Others >8~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Skipping "heroku": requires node runtime
-# Consider:
-#  * docker
-#  * kubernetes
-
-# ~~~~~~~~~~~~~~~~~~~~~~8< Trust Anchors: OpenPGP >8~~~~~~~~~~~~~~~~~~~~~~
-
-keydir="/home/${RUNTIME_USER}/etc/pgp-keys"
-pgpdir="/home/${RUNTIME_USER}/.gnupg"
-mkdir -pv "$keydir"
-mkdir -pv "$pgpdir/CA"
-
-cd /tmp
-cp -v etc/pgp*.asc "$keydir/./"
-cp -v etc/hkp-*.pem etc/sks-*.pem "$pgpdir/CA/./"
-chown -R "${RUNTIME_USER}:${RUNTIME_GROUP}" "$keydir"
-
-cat >"$pgpdir/gpg.conf" <<EOGPGCONF
-no-greeting
-no-secmem-warning
-keyid-format 0xlong
-display-charset utf-8
-no-comments
-no-version
-# TOFU requires GnuPG built with sqlite to even parse the options.
-#trust-model tofu+pgp
-#tofu-default-policy unknown
-
-trusted-key ${PT_GNUPG_TRUSTED_KEY}
-keyserver hkp://ha.pool.sks-keyservers.net
-#keyserver hkp://subset.pool.sks-keyservers.net
-auto-key-locate local,dane,wkd
-EOGPGCONF
-
-cat >"$pgpdir/dirmngr.conf" <<EODIRMNGR
-#log-file ${pgpdir}/log.dirmngr
-#verbose
-#debug-all
-#gnutls-debug 9
-allow-ocsp
-hkp-cacert ${pgpdir}/CA/hkp-cacerts.pem
-allow-version-check
-EODIRMNGR
-
-chmod -R go-rwx "$pgpdir"
-chown -R "${RUNTIME_USER}:${RUNTIME_GROUP}" "/home/${RUNTIME_USER}"
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~8< User config >8~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-for F in /tmp/etc/dot.*; do
-  install -o "${RUNTIME_USER}" -m 0600 "$F" "/home/${RUNTIME_USER}/${F##*/dot}"
-done
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~8< Cleanup >8~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 rm -rf "$SHARED_GO_AREA/.cache"
-
-cd /tmp
-rm -rf pkix tools etc
