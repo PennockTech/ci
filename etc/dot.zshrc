@@ -138,6 +138,9 @@ path=(
   ~/bin(N/)
   ~/.pyenv/shims(N/)
   ~/.pyenv/bin(N/)
+  /opt/gotools/bin(N/)
+  /usr/local/go/bin(N/)
+  /opt/gnupg/sbin(N/) /opt/gnupg/bin(N/)
   "${path[@]}"
   /opt/spodhuis/sbin(N/)
   /opt/spodhuis/bin(N/)
@@ -191,7 +194,7 @@ fi
 # Non-path environ tuning {{{
 
 export LC_CTYPE=en_US.UTF-8
-export PAGER='less -FMQRij5'
+export PAGER='less -FXMQRij5'
 unset MAIL || :
 
 if (( $+commands[vim] )); then
