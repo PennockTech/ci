@@ -21,6 +21,8 @@ docker_build() {
   unset ci_color
 }
 
+seen_variants=''
+
 for SET in $BUILD_SETS; do
   case $SET in
   *:*)
@@ -34,4 +36,10 @@ for SET in $BUILD_SETS; do
 
   docker_build "$VARIANT" "$DIRECTORY" --tag "${PT_DOCKER_BASETAG}:${VARIANT}-root" --target rootstage
   docker_build "$VARIANT" "$DIRECTORY" --tag "${PT_DOCKER_BASETAG}:${VARIANT}"
+  seen_variants="${seen_variants} ${VARIANT}-root ${VARIANT}"
 done
+
+# Want to keep the single quotes because the var is derived within the string;
+# code is correct, shellcheck is very wrong.
+# shellcheck disable=SC2016
+printf >&2 '\nSuggest:\n for T in %s; do\n  docker push "%s:$T";\n done\n' "${seen_variants# }" "${PT_DOCKER_BASETAG}"
