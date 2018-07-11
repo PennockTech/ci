@@ -55,6 +55,14 @@ else
   set viminfo=
 endif
 
+" Work around for Python 3.7 adding deprecation warnings, which trigger when
+" vim is built with support for both Py2 and Py3.  Get the loading done just
+" once, while silent.  If there's further brokenness, we'll have masked it.
+" :(
+if has('python3')
+  silent! python3 1
+endif
+
 " indent & formatting
 set autoindent
 set nocindent		"not by default, but can be enabled via setl
