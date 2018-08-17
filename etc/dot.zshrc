@@ -368,6 +368,14 @@ function rgrep {
 		"$@"
 }
 
+for cmd in less; do
+  for dir in /opt/spodhuis/bin /usr/local/bin ; do
+    test -x "$dir/$cmd" || continue
+    alias "$cmd=$dir/$cmd"
+    break
+  done
+done
+
 # Aliases and functions }}}
 
 # Per-vhost/jail/container settings {{{
