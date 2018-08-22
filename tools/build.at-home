@@ -1,6 +1,6 @@
 #!/bin/sh -eu
 
-: "${HOME_HTTP_PROXY:=http://192.168.120.21:3128/}"
+: "${HOME_HTTP_PROXY=http://192.168.120.21:3128/}"
 : "${BUILD_SETS:=pastel:purple pink:purple purple}"
 : "${PT_DOCKER_BASETAG:=pennocktech/ci}"
 
