@@ -62,12 +62,22 @@ user_bin_go get golang.org/x/tools/cmd/...
 
 cd /tmp
 mkdir release
-download_to_tmp "https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64" release/dep-linux-amd64
+Relative=release/dep-linux-amd64
+download_to_tmp "https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64" "$Relative"
 download_to_tmp "https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64.sha256" cksum.dep
+# Note: dep v0.5.0 embeds absolute paths within Travis in their published checksum file.
+# Insanity.
+if grep -q -s "/$Relative" cksum.dep; then
+  info Repairing dep checksum file
+  mv -v cksum.dep cksum.dep.gross
+  sed -n "s, /.*/${Relative}, ${Relative},p" <cksum.dep.gross >cksum.dep
+  rm -v cksum.dep.gross
+fi
 sha256sum -c cksum.dep
-chmod 0755 ./release/dep-linux-amd64
-mv -v ./release/dep-linux-amd64 /usr/local/bin/dep
+chmod 0755 "./$Relative"
+mv -v "./$Relative" /usr/local/bin/dep
 rmdir release
+rm -v cksum.dep
 dep version
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~8< Go Packages >8~~~~~~~~~~~~~~~~~~~~~~~~~~~~
