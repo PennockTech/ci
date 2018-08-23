@@ -27,7 +27,7 @@ run apk upgrade --no-cache
 # ourselves.
 #
 # Repetition in these is okay.
-readonly CriticalPackages="openssl curl jq git"
+readonly CriticalPackages="openssl curl jq git openssh-client"
 readonly GoPackages="go musl-dev bash make" # bash/make for building local Go
 readonly NicerDebugPackages="zsh tar socat pcre-tools chrpath less file strace binutils"
 readonly PythonPackages="gcc make linux-headers libffi libffi-dev python3 python3-dev py-pip"
