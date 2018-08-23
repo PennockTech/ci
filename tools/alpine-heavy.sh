@@ -43,6 +43,7 @@ readonly KitchenSinkPackages="
   $CryptoPackages
   $RepoPackages
   musl-dev
+  openssl-dev
   coreutils
   wget rsync
   ncurses
