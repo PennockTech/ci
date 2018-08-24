@@ -9,6 +9,8 @@
 #
 #   . "$(dirname "$0")/lib.sh" "$0" "$@"
 
+# This file exists in PT's CI and Packer repos, as lib.sh and ss_common.sh
+
 set -eu
 top_arg0="${1:?missing argv0 from caller}"
 shift
@@ -184,7 +186,7 @@ fi
 # Retrieval Utilities {{{
 
 # These utilities assume that there are no untrusted users in /tmp, which is
-# true during docker build, for the duration of that build.
+# true during docker|packer build, for the duration of that build.
 
 download_to_tmp() {
   local url="${1:?need a URL}" lfn="${2:?need a local filename}"
