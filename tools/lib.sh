@@ -9,7 +9,7 @@
 #
 #   . "$(dirname "$0")/lib.sh" "$0" "$@"
 
-# This file exists in PT's CI and Packer repos, as lib.sh and ss_common.sh
+# This file exists in PT's CI & Packer repos, as lib.sh in appropriate places.
 
 set -eu
 top_arg0="${1:?missing argv0 from caller}"
