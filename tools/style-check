@@ -9,6 +9,23 @@
 # shellcheck source=tools/lib.sh disable=SC2034
 . "$(dirname "$0")/lib.sh" "$0" "$@"
 
+usage() {
+  printf >&2 'Usage: %s [-v]\n -v   verbose\n' "$progname"
+  exit "${1:-1}"
+}
+
+while getopts ":hv" arg; do
+  case $arg in
+  h) usage 0 2>&1 ;;
+  v) VERBOSE=$((VERBOSE + 1)) ;;
+  :) die "missing required option for -$OPTARG; see -h for help" ;;
+  \?) die "unknown option -$OPTARG; see -h for help" ;;
+  *) die "unhandled option -$OPTARG; CODE BUG" ;;
+  esac
+done
+shift $((OPTIND - 1))
+unset OPTIND
+
 cd_to_repo_root
 
 for F in tools/*; do
@@ -16,6 +33,10 @@ for F in tools/*; do
   base="$(basename "$F")"
 
   case "$base" in
+  *.md)
+    verbose "Skipping shellcheck of markdown file '${base}'"
+    continue
+    ;;
   lib.sh)
     # All exclusions marked at the top of the script.
     shellcheck "$F" || bump_warn_count
