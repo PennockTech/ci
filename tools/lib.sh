@@ -1,5 +1,5 @@
-#!/bin/echo you should source me
-# shellcheck shell=sh
+#!/bin/echo you_should_source_me
+# shellcheck shell=sh disable=SC2034,SC2039
 #
 # Copyright © 2018 Pennock Tech, LLC.
 # All rights reserved, except as granted under license.
@@ -7,7 +7,13 @@
 
 # Correct sourcing, for scripts in same directory:
 #
+#   # shellcheck source=tools/lib.sh
 #   . "$(dirname "$0")/lib.sh" "$0" "$@"
+
+# Shellcheck disabling rationale:
+#  SC2034: we're a lib.sh, we define things which are unused herein, that's
+#          part of the point.
+#  SC2039: we use local, POSIX or not.
 
 set -eu
 top_arg0="${1:?missing argv0 from caller}"
@@ -43,7 +49,16 @@ fgrep() { LC_ALL=C GREP_OPTIONS='' command "$GREP_CMD" -F "$@"; }
 
 # Tracing Functions {{{
 
-: "${VERBOSE:=0}"
+# Verbose must be a non-negative integer
+if [ -n "${VERBOSE:-}" ]; then
+  case ${VERBOSE} in
+  *[!0-9]*) VERBOSE=1 ;;
+  *) VERBOSE=$((0 + VERBOSE)) ;;
+  esac
+else
+  VERBOSE=0
+fi
+
 warn_count=0
 bump_warn_count() { warn_count=$((warn_count + 1)); }
 
