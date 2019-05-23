@@ -66,11 +66,13 @@ bump_warn_count() { warn_count=$((warn_count + 1)); }
 _stderr_colored() {
   local color="$1"
   shift
-  if [ -n "${NOCOLOR:-}" ]; then
+  if [ -n "${NOCOLOR:-}" ] && [ -n "${NOEMOJI:-}" ]; then
     printf >&2 '%s: %s\n' "$progname" "$*"
   elif [ -n "${NOEMOJI:-}" ]; then
     # shellcheck disable=SC1117
     printf >&2 "\033[${color}m%s: \033[1m%s\033[0m\n" "$progname" "$*"
+  elif [ -n "${NOCOLOR:-}" ]; then
+    printf >&2 "${PREFIX_SYMBOL:-}${PREFIX_SYMBOL:+ }%s: %s\n" "$progname" "$*"
   else
     # shellcheck disable=SC1117
     printf >&2 "${PREFIX_SYMBOL:-}${PREFIX_SYMBOL:+ }\033[${color}m%s: \033[1m%s\033[0m\n" "$progname" "$*"
