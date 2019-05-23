@@ -68,20 +68,28 @@ _stderr_colored() {
   shift
   if [ -n "${NOCOLOR:-}" ]; then
     printf >&2 '%s: %s\n' "$progname" "$*"
-  else
+  elif [ -n "${NOEMOJI:-}" ]; then
     # shellcheck disable=SC1117
     printf >&2 "\033[${color}m%s: \033[1m%s\033[0m\n" "$progname" "$*"
+  else
+    # shellcheck disable=SC1117
+    printf >&2 "${PREFIX_SYMBOL:-}${PREFIX_SYMBOL:+ }\033[${color}m%s: \033[1m%s\033[0m\n" "$progname" "$*"
   fi
 }
 
-info() { _stderr_colored 32 "$@"; }
+info() {
+  local PREFIX_SYMBOL='✅'
+  _stderr_colored 32 "$@"
+}
 
 warn() {
+  local PREFIX_SYMBOL='⚠️ '
   _stderr_colored 31 "$@"
   bump_warn_count
 }
 
 warn_multi() {
+  local PREFIX_SYMBOL='⚠️'
   local x
   for x; do
     _stderr_colored 31 "$x"
@@ -90,11 +98,13 @@ warn_multi() {
 }
 
 die() {
+  local PREFIX_SYMBOL='❌'
   _stderr_colored 31 "$@"
   exit 1
 }
 
 die_multi() {
+  local PREFIX_SYMBOL='❌'
   local x
   for x; do
     _stderr_colored 31 "$x"
@@ -104,7 +114,15 @@ die_multi() {
 
 verbose_n() {
   [ "$VERBOSE" -ge "$1" ] || return 0
+  local verbosity="$1"
   shift
+  local PREFIX_SYMBOL
+  case "$verbosity" in
+  1) PREFIX_SYMBOL='🗣️ ' ;;
+  2) PREFIX_SYMBOL='🎺' ;;
+  3) PREFIX_SYMBOL='📢' ;;
+  *) PREFIX_SYMBOL='🙊' ;;
+  esac
   _stderr_colored 36 "$@"
 }
 
