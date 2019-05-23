@@ -17,15 +17,15 @@ for F in tools/*; do
 
   case "$base" in
   lib.sh)
-    # SC1008 because using #!/bin/echo
-    # SC2034 because plenty of unused variables set for sourcers
-    # SC2039 because we use 'local'
-    # SC2096 because using #!/bin/echo
-    shellcheck -e SC1008,SC2034,SC2039,SC2096 "$F" || bump_warn_count
+    # All exclusions marked at the top of the script.
+    shellcheck "$F" || bump_warn_count
     ;;
   *)
     # SC2039 because we use 'local'
-    shellcheck -e SC2039 -x "$F" || bump_warn_count
+    # SC2240 because we use "$@" passthru for sourcing lib.sh; if the sh
+    #        doesn't support it, it's broken, POSIX or not.  This is at
+    #        the same level of "basic usability" as 'local'.
+    shellcheck -e SC2039,SC2240 -x "$F" || bump_warn_count
     ;;
   esac
 

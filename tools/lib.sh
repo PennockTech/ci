@@ -1,15 +1,21 @@
-#!/bin/echo you should source me
-# shellcheck shell=sh
+#!/bin/echo you_should_source_me
+# shellcheck shell=sh disable=SC2034,SC2039
 #
-# Copyright © 2018 Pennock Tech, LLC.
+# Copyright © 2018,2019 Pennock Tech, LLC.
 # All rights reserved, except as granted under license.
 # Licensed per file LICENSE.txt
 
 # Correct sourcing, for scripts in same directory:
 #
+#   # shellcheck source=tools/lib.sh
 #   . "$(dirname "$0")/lib.sh" "$0" "$@"
 
 # This file exists in PT's CI & Packer repos, as lib.sh in appropriate places.
+
+# Shellcheck disabling rationale:
+#  SC2034: we're a lib.sh, we define things which are unused herein, that's
+#          part of the point.
+#  SC2039: we use local, POSIX or not.
 
 set -eu
 top_arg0="${1:?missing argv0 from caller}"
@@ -45,29 +51,49 @@ fgrep() { LC_ALL=C GREP_OPTIONS='' command "$GREP_CMD" -F "$@"; }
 
 # Tracing Functions {{{
 
-: "${VERBOSE:=0}"
+# Verbose must be a non-negative integer
+if [ -n "${VERBOSE:-}" ]; then
+  case ${VERBOSE} in
+  *[!0-9]*) VERBOSE=1 ;;
+  *) VERBOSE=$((0 + VERBOSE)) ;;
+  esac
+else
+  VERBOSE=0
+fi
+
 warn_count=0
+warn_repeat_at_exit_file=''
 bump_warn_count() { warn_count=$((warn_count + 1)); }
 
 _stderr_colored() {
   local color="$1"
   shift
-  if [ -n "${NOCOLOR:-}" ]; then
+  if [ -n "${NOCOLOR:-}" ] && [ -n "${NOEMOJI:-}" ]; then
     printf >&2 '%s: %s\n' "$progname" "$*"
-  else
+  elif [ -n "${NOEMOJI:-}" ]; then
     # shellcheck disable=SC1117
     printf >&2 "\033[${color}m%s: \033[1m%s\033[0m\n" "$progname" "$*"
+  elif [ -n "${NOCOLOR:-}" ]; then
+    printf >&2 "${PREFIX_SYMBOL:-}${PREFIX_SYMBOL:+ }%s: %s\n" "$progname" "$*"
+  else
+    # shellcheck disable=SC1117
+    printf >&2 "${PREFIX_SYMBOL:-}${PREFIX_SYMBOL:+ }\033[${color}m%s: \033[1m%s\033[0m\n" "$progname" "$*"
   fi
 }
 
-info() { _stderr_colored 32 "$@"; }
+info() {
+  local PREFIX_SYMBOL='✅'
+  _stderr_colored 32 "$@"
+}
 
 warn() {
+  local PREFIX_SYMBOL='⚠️ '
   _stderr_colored 31 "$@"
   bump_warn_count
 }
 
 warn_multi() {
+  local PREFIX_SYMBOL='⚠️'
   local x
   for x; do
     _stderr_colored 31 "$x"
@@ -76,11 +102,13 @@ warn_multi() {
 }
 
 die() {
+  local PREFIX_SYMBOL='❌'
   _stderr_colored 31 "$@"
   exit 1
 }
 
 die_multi() {
+  local PREFIX_SYMBOL='❌'
   local x
   for x; do
     _stderr_colored 31 "$x"
@@ -90,19 +118,47 @@ die_multi() {
 
 verbose_n() {
   [ "$VERBOSE" -ge "$1" ] || return 0
+  local verbosity="$1"
   shift
+  local PREFIX_SYMBOL
+  case "$verbosity" in
+  1) PREFIX_SYMBOL='🗣️ ' ;;
+  2) PREFIX_SYMBOL='🎺' ;;
+  3) PREFIX_SYMBOL='📢' ;;
+  *) PREFIX_SYMBOL='🙊' ;;
+  esac
   _stderr_colored 36 "$@"
 }
 
 verbose() { verbose_n 1 "$@"; }
 
+warn_setup_repeat_at_exit() {
+  # We're sh, not bash, so we don't have arrays, so use a tempfile,
+  # which we might well leak since we can't rely upon a stack of cleanup
+  # functions (or should we, using this lib?).
+  # We'll just have to live with that.
+  warn_repeat_at_exit_file="$(mktemp "${TMPDIR:-/tmp}/warnings.$progname.XXXXXXXXXX")"
+}
+
+repeat_at_exit_warn() {
+  [ -n "$warn_repeat_at_exit_file" ] || warn_setup_repeat_at_exit
+  warn "$@"
+  _stderr_colored 31 "$@" 2>>"$warn_repeat_at_exit_file"
+}
+
 # call "report_exit -0" to exit 1 if warnings, else 0
 report_exit() {
   if [ "$warn_count" -gt 0 ]; then
     warn "saw ${warn_count} warnings"
+    if [ -n "$warn_repeat_at_exit_file" ]; then
+      cat >&2 <"$warn_repeat_at_exit_file"
+      rm -f -- "$warn_repeat_at_exit_file"
+    fi
     if [ ".${1:-}" = ".-0" ]; then
       exit 1
     fi
+  elif [ -n "$warn_repeat_at_exit_file" ]; then
+    rm -f -- "$warn_repeat_at_exit_file"
   fi
   exit "${1:-0}"
 }

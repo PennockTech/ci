@@ -40,10 +40,11 @@ GOHOSTARCH="$(go env GOHOSTARCH)" \
   ./make.bash
 run apk del go
 
-cd /usr/local/go/pkg
-# reclaim 177 MiB:
-run rm -rf bootstrap/ obj
-cd ..
+(
+  cd /usr/local/go/pkg
+  # reclaim 177 MiB:
+  run rm -rf bootstrap/ obj
+)
 rm -rf doc # another 4.3MiB
 
 cd "$startdir"
