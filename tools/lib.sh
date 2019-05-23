@@ -1,7 +1,7 @@
 #!/bin/echo you_should_source_me
 # shellcheck shell=sh disable=SC2034,SC2039
 #
-# Copyright © 2018 Pennock Tech, LLC.
+# Copyright © 2018,2019 Pennock Tech, LLC.
 # All rights reserved, except as granted under license.
 # Licensed per file LICENSE.txt
 
@@ -60,6 +60,7 @@ else
 fi
 
 warn_count=0
+warn_repeat_at_exit_file=''
 bump_warn_count() { warn_count=$((warn_count + 1)); }
 
 _stderr_colored() {
@@ -109,13 +110,33 @@ verbose_n() {
 
 verbose() { verbose_n 1 "$@"; }
 
+warn_setup_repeat_at_exit() {
+  # We're sh, not bash, so we don't have arrays, so use a tempfile,
+  # which we might well leak since we can't rely upon a stack of cleanup
+  # functions (or should we, using this lib?).
+  # We'll just have to live with that.
+  warn_repeat_at_exit_file="$(mktemp "${TMPDIR:-/tmp}/warnings.$progname.XXXXXXXXXX")"
+}
+
+repeat_at_exit_warn() {
+  [ -n "$warn_repeat_at_exit_file" ] || warn_setup_repeat_at_exit
+  warn "$@"
+  _stderr_colored 31 "$@" 2>>"$warn_repeat_at_exit_file"
+}
+
 # call "report_exit -0" to exit 1 if warnings, else 0
 report_exit() {
   if [ "$warn_count" -gt 0 ]; then
     warn "saw ${warn_count} warnings"
+    if [ -n "$warn_repeat_at_exit_file" ]; then
+      cat >&2 <"$warn_repeat_at_exit_file"
+      rm -f -- "$warn_repeat_at_exit_file"
+    fi
     if [ ".${1:-}" = ".-0" ]; then
       exit 1
     fi
+  elif [ -n "$warn_repeat_at_exit_file" ]; then
+    rm -f -- "$warn_repeat_at_exit_file"
   fi
   exit "${1:-0}"
 }
