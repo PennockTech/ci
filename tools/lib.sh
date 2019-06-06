@@ -218,7 +218,7 @@ git_is_inside_worktree() {
   [ "${output:-.}" = "true" ]
 }
 
-if have_cmd "$GIT_CMD" && git_is_inside_worktree "$progdir"; then
+if have_cmd "$GIT_CMD" && git_is_inside_worktree "$progdir" 2>/dev/null; then
   have_git=true
   REPO_ROOT="$(
     unset GIT_DIR
