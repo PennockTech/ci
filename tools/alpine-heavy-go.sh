@@ -73,12 +73,18 @@ if grep -q -s "/$Relative" cksum.dep; then
   mv -v cksum.dep cksum.dep.gross
   sed -n "s, /.*/${Relative}, ${Relative},p" <cksum.dep.gross >cksum.dep
   rm -v cksum.dep.gross
+elif grep -q -s " ${Relative##*/}" cksum.dep; then
+  # By time of dep v0.5.3 they've switched to "no release/ within the cksum file".
+  # I now think wistful thoughts about go modules.
+  mv -v cksum.dep "${Relative%/*}/./"
+  cd "${Relative%/*}/./"
 fi
 sha256sum -c cksum.dep
+rm -v cksum.dep
+cd /tmp
 chmod 0755 "./$Relative"
 mv -v "./$Relative" /usr/local/bin/dep
 rmdir release
-rm -v cksum.dep
 dep version
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~8< Go Packages >8~~~~~~~~~~~~~~~~~~~~~~~~~~~~
