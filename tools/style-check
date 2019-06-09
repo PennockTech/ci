@@ -20,7 +20,7 @@ while getopts ":hv" arg; do
   v) VERBOSE=$((VERBOSE + 1)) ;;
   :) die "missing required option for -$OPTARG; see -h for help" ;;
   \?) die "unknown option -$OPTARG; see -h for help" ;;
-  *) die "unhandled option -$OPTARG; CODE BUG" ;;
+  *) die "unhandled option -$arg; CODE BUG" ;;
   esac
 done
 shift $((OPTIND - 1))
