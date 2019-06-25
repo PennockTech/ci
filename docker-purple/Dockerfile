@@ -86,21 +86,24 @@ LABEL com.pennock-tech.runtime.gopath="${GOPATH}"
 
 FROM rootstage
 
+ARG PT_VARIANT
+ARG RUNTIME_UID
+ARG RUNTIME_GID
+ARG RUNTIME_SUPGIDS
+# nb: RUNTIME_USER persisted in ENV from first stage
+
 WORKDIR /home/${RUNTIME_USER}
 # Deliberately no way back to root; use a rootstage if need root
 USER ${RUNTIME_USER}
 
 ENV GOPATH=/home/${RUNTIME_USER}/go:${GOPATH}
 ENV PATH=/home/${RUNTIME_USER}/go/bin:${PATH}
+ENV XDG_RUNTIME_DIR=/run/user/${RUNTIME_UID}
 
 RUN ./prepared-final-stage.sh && rm -fv ./prepared-final-stage.sh
 
 # Install any user-specific Go here
 
-ARG PT_VARIANT
-ARG RUNTIME_UID
-ARG RUNTIME_GID
-ARG RUNTIME_SUPGIDS
 LABEL com.pennock-tech.name="Pennock Tech Continuous Integration - ${PT_VARIANT}"
 LABEL com.pennock-tech.runtime.username="${RUNTIME_USER}"
 LABEL com.pennock-tech.runtime.uid="${RUNTIME_UID}"

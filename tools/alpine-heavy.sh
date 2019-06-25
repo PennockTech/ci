@@ -97,6 +97,12 @@ for gid in $RUNTIME_SUPGIDS; do
   run adduser "$RUNTIME_USER" "$gname"
 done
 
+# /run is not tmpfs inside Docker by default, so provide something which
+# will work for common modern layouts.  For the XDG guidelines: we define
+# the duration of the user's login as the lifetime of the container.
+mkdir -pv /run/user/0 "/run/user/${RUNTIME_UID}"
+chown "${RUNTIME_UID}:${RUNTIME_GID}" "/run/user/${RUNTIME_UID}"
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~8< Trust Stores >8~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # GnuPG stuff isolated to "if have gpg command"
 
