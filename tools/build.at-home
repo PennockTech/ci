@@ -1,4 +1,4 @@
-#!/bin/sh -eu
+#!/bin/bash -eu
 
 : "${HOME_HTTP_PROXY=http://192.168.120.21:3128/}"
 : "${BUILD_SETS:=pastel:purple pink:purple purple}"

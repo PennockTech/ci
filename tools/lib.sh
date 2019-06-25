@@ -9,6 +9,10 @@
 #
 #   # shellcheck source=tools/lib.sh
 #   . "$(dirname "$0")/lib.sh" "$0" "$@"
+#
+# If /bin/sh is dash, then the script will need to be bash or other "slightly
+# more than POSIX" shell.  We only expect: `local` to work, and `source` to
+# pass along arguments.
 
 # This file exists in PT's CI & Packer repos, as lib.sh in appropriate places.
 
@@ -74,6 +78,7 @@ _stderr_colored() {
     # shellcheck disable=SC1117
     printf >&2 "\033[${color}m%s: \033[1m%s\033[0m\n" "$progname" "$*"
   elif [ -n "${NOCOLOR:-}" ]; then
+    # shellcheck disable=SC1117
     printf >&2 "${PREFIX_SYMBOL:-}${PREFIX_SYMBOL:+ }%s: %s\n" "$progname" "$*"
   else
     # shellcheck disable=SC1117

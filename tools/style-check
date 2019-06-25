@@ -1,10 +1,12 @@
-#!/bin/sh -eu
+#!/bin/bash -eu
 
 # Style enforcement, suitable for use in a pre-commit hook.
 #
 # Style choices:
 #  * two-space indent in scripts, set per .editorconfig
 #  * almost-POSIX shell; we demand 'local' be available.
+#  * we also expect source to pass arguments, which dash does not, so we
+#    now specify bash
 #
 # shellcheck source=tools/lib.sh disable=SC2034
 . "$(dirname "$0")/lib.sh" "$0" "$@"
@@ -39,7 +41,8 @@ for F in tools/*; do
     ;;
   lib.sh)
     # All exclusions marked at the top of the script.
-    shellcheck "$F" || bump_warn_count
+    # Except the #! line because the exclusion there comes too late.
+    shellcheck -e SC1008 "$F" || bump_warn_count
     ;;
   *)
     # SC2039 because we use 'local'
