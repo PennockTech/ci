@@ -70,6 +70,10 @@ warn_repeat_at_exit_file=''
 bump_warn_count() { warn_count=$((warn_count + 1)); }
 
 _stderr_colored() {
+  # Rationale for shellcheck disables:
+  #   SC1117: it's a "prefer", we are correct in what we have, and changing
+  #           would make the code less readable, not more.
+  #
   local color="$1"
   shift
   if [ -n "${NOCOLOR:-}" ] && [ -n "${NOEMOJI:-}" ]; then
@@ -83,6 +87,41 @@ _stderr_colored() {
   else
     # shellcheck disable=SC1117
     printf >&2 "${PREFIX_SYMBOL:-}${PREFIX_SYMBOL:+ }\033[${color}m%s: \033[1m%s\033[0m\n" "$progname" "$*"
+  fi
+}
+
+_stderr_coloredf() {
+  # Rationale for shellcheck disables:
+  #   SC1117: it's a "prefer", we are correct in what we have, and changing
+  #           would make the code less readable, not more.
+  #   SC2059: we are explicitly using a var in printf first-param because we're
+  #           a <something>f() pass-thru
+  #
+  local color="$1"
+  shift
+  if [ -n "${NOCOLOR:-}" ] && [ -n "${NOEMOJI:-}" ]; then
+    printf >&2 '%s: ' "$progname"
+    # shellcheck disable=SC2059
+    printf >&2 "$@"
+    printf >&2 '\n'
+  elif [ -n "${NOEMOJI:-}" ]; then
+    # shellcheck disable=SC1117
+    printf >&2 "\033[${color}m%s: \033[1m" "${progname}"
+    # shellcheck disable=SC2059
+    printf >&2 "$@"
+    printf >&2 '\033[0m\n'
+  elif [ -n "${NOCOLOR:-}" ]; then
+    # shellcheck disable=SC1117
+    printf >&2 "${PREFIX_SYMBOL:-}${PREFIX_SYMBOL:+ }%s: " "$progname"
+    # shellcheck disable=SC2059
+    printf >&2 "$@"
+    printf >&2 '\n'
+  else
+    # shellcheck disable=SC1117
+    printf >&2 "${PREFIX_SYMBOL:-}${PREFIX_SYMBOL:+ }\033[${color}m%s: \033[1m" "$progname"
+    # shellcheck disable=SC2059
+    printf >&2 "$@"
+    printf >&2 '\033[0m\n'
   fi
 }
 
