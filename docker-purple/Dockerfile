@@ -93,8 +93,9 @@ WORKDIR /home/${RUNTIME_USER}
 # Deliberately no way back to root; use a rootstage if need root
 USER ${RUNTIME_USER}
 
-ENV GOPATH=/home/${RUNTIME_USER}/go:${GOPATH}
-ENV PATH=/home/${RUNTIME_USER}/go/bin:${PATH}
+ENV HOME=/home/${RUNTIME_USER}
+ENV GOPATH=${HOME}/go:${GOPATH}
+ENV PATH=${HOME}/go/bin:${PATH}
 ENV XDG_RUNTIME_DIR=/run/user/${RUNTIME_UID}
 
 RUN ./prepared-final-stage.sh && rm -fv ./prepared-final-stage.sh
