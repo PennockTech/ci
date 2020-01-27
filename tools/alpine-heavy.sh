@@ -33,7 +33,9 @@ readonly NicerDebugPackages="zsh tar socat pcre-tools chrpath less file strace b
 readonly PythonPackages="gcc make linux-headers libffi libffi-dev python3 python3-dev py-pip"
 readonly DNSPackages="unbound unbound-libs unbound-dev bind-tools ldns-tools drill"
 readonly CryptoPackages="openssl gnutls-utils gnupg"
-readonly RepoPackages="git mercurial github-cli"
+readonly RepoPackages="git mercurial"
+# Removed from RepoPackages:
+#   2020-01-27 github-cli : aport gone, <https://gitlab.alpinelinux.org/alpine/aports/commit/1898033c5f9e95dcee43f95e1d1671adbbd6b022>
 readonly KitchenSinkPackages="
   $CriticalPackages
   $GoPackages
