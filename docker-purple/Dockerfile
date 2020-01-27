@@ -22,6 +22,7 @@ ARG RUNTIME_USER=ci
 ARG RUNTIME_GECOS='Continuous Integration'
 ARG RUNTIME_UID=1001
 ARG RUNTIME_GID=1001
+ARG RUNTIME_SHELL=/bin/sh
 #
 # Neat/Evil hack: while in CI we use Docker-in-Docker, for local development
 # it's nicer to bind-mount /var/run/docker.sock into the instance, so that
@@ -47,6 +48,7 @@ ARG RUNTIME_USER
 ARG RUNTIME_GECOS
 ARG RUNTIME_UID
 ARG RUNTIME_GID
+ARG RUNTIME_SHELL
 ARG RUNTIME_SUPGIDS
 ARG SHARED_GO_AREA
 
@@ -86,6 +88,7 @@ FROM rootstage
 ARG PT_VARIANT
 ARG RUNTIME_UID
 ARG RUNTIME_GID
+ARG RUNTIME_SHELL
 ARG RUNTIME_SUPGIDS
 # nb: RUNTIME_USER persisted in ENV from first stage
 
@@ -106,6 +109,7 @@ LABEL com.pennock-tech.name="Pennock Tech Continuous Integration - ${PT_VARIANT}
 LABEL com.pennock-tech.runtime.username="${RUNTIME_USER}"
 LABEL com.pennock-tech.runtime.uid="${RUNTIME_UID}"
 LABEL com.pennock-tech.runtime.gid="${RUNTIME_GID}"
+LABEL com.pennock-tech.runtime.shell="${RUNTIME_SHELL}"
 LABEL com.pennock-tech.runtime.supgids="${RUNTIME_SUPGIDS}"
 LABEL com.pennock-tech.runtime.path="${PATH}"
 LABEL com.pennock-tech.runtime.gopath="${GOPATH}"
