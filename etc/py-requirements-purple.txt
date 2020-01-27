@@ -4,11 +4,6 @@ pycodestyle <2.4.0,>=2.0.0      # flake8 3.5.0 requirements
 pylint
 tox
 
-# Python 3.7 isn't out when this was written, but we're using the PEP devel
-# spec, so we'll just import until 3.7; no need to mess with the varying types
-# of version equality, since we've already blocked off < 3.6:
-dataclasses; python_version < '3.7'
-
 # Libs
 GitPython       # git; import as: git
 Jinja2          # Templates; import as: jinja2
@@ -34,3 +29,6 @@ google-api-python-client        # GCE; import as: googleapiclient
 awscli
 s3cmd
 python-magic
+
+# Microsoft
+azure-cli
