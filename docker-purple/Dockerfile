@@ -15,9 +15,8 @@
 # Also, note that LABELs persist across inheritance boundaries, unless
 # overridden.
 
-ARG GOLANG_VERSION=1.12.5
-ARG GOLANG_SRC_SHASUM=2aa5f088cbb332e73fc3def546800616b38d3bfe6b8713b8a6404060f22503e8
-ARG DEP_VERSION=0.5.3
+ARG GOLANG_VERSION=1.13.6
+ARG GOLANG_SRC_SHASUM=aae5be954bdc40bcf8006eb77e8d8a5dde412722bc8effcdaf9772620d06420c
 ARG PT_VARIANT=purple
 ARG RUNTIME_USER=ci
 ARG RUNTIME_GECOS='Continuous Integration'
@@ -43,7 +42,6 @@ ARG SHARED_GO_AREA=/opt/gotools
 FROM alpine as rootstage
 ARG GOLANG_VERSION
 ARG GOLANG_SRC_SHASUM
-ARG DEP_VERSION
 ARG PT_VARIANT
 ARG RUNTIME_USER
 ARG RUNTIME_GECOS
@@ -74,7 +72,6 @@ LABEL com.pennock-tech.name="Pennock Tech Continuous Integration - $PT_VARIANT (
 LABEL com.pennock-tech.baseimage="alpine"
 LABEL com.pennock-tech.variant="${PT_VARIANT}"
 LABEL com.pennock-tech.versions.go="${GOLANG_VERSION}"
-LABEL com.pennock-tech.versions.dep="${DEP_VERSION}"
 LABEL com.pennock-tech.runtime.username="root"
 LABEL com.pennock-tech.runtime.uid="0"
 LABEL com.pennock-tech.runtime.gid="0"

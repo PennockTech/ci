@@ -59,34 +59,6 @@ export GOPATH="$SHARED_GO_AREA"
 user_bin_go version
 user_bin_go get golang.org/x/tools/cmd/...
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~8< Dep >8~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-cd /tmp
-mkdir release
-Relative=release/dep-linux-amd64
-download_to_tmp "https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64" "$Relative"
-download_to_tmp "https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64.sha256" cksum.dep
-# Note: dep v0.5.0 embeds absolute paths within Travis in their published checksum file.
-# Insanity.
-if grep -q -s "/$Relative" cksum.dep; then
-  info Repairing dep checksum file
-  mv -v cksum.dep cksum.dep.gross
-  sed -n "s, /.*/${Relative}, ${Relative},p" <cksum.dep.gross >cksum.dep
-  rm -v cksum.dep.gross
-elif grep -q -s " ${Relative##*/}" cksum.dep; then
-  # By time of dep v0.5.3 they've switched to "no release/ within the cksum file".
-  # I now think wistful thoughts about go modules.
-  mv -v cksum.dep "${Relative%/*}/./"
-  cd "${Relative%/*}/./"
-fi
-sha256sum -c cksum.dep
-rm -v cksum.dep
-cd /tmp
-chmod 0755 "./$Relative"
-mv -v "./$Relative" /usr/local/bin/dep
-rmdir release
-dep version
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~8< Go Packages >8~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 user_bin_go get github.com/jstemmer/go-junit-report

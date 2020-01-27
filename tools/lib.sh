@@ -35,7 +35,6 @@ startdir="$(pwd)"
 # version of Go.
 : "${GIT_CMD:=git}"
 : "${GO_CMD:=go}"
-: "${DEP_CMD:=dep}"
 : "${DOCKER_CMD:=docker}"
 : "${GREP_CMD:=grep}"
 : "${GPG_CMD:=gpg}"
@@ -43,7 +42,6 @@ startdir="$(pwd)"
 # Wrapper functions for overridden commands {{{
 git() { command "$GIT_CMD" "$@"; }
 go() { command "$GO_CMD" "$@"; }
-dep() { command "$DEP_CMD" "$@"; }
 docker() { command "$DOCKER_CMD" "$@"; }
 gpg() { command "$GPG_CMD" "$@"; }
 
