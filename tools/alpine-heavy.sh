@@ -93,10 +93,23 @@ run adduser -h "/home/$RUNTIME_USER" -s "$RUNTIME_SHELL" \
   -g "$RUNTIME_GECOS" -G "$RUNTIME_GROUP" -D \
   -u "$RUNTIME_UID" "$RUNTIME_USER"
 
-for gid in $RUNTIME_SUPGIDS; do
-  # Alpine won't take a gid
-  gname="$(awk -F : '$3 == '"$gid"' { print $1 }' </etc/group)"
-  run adduser "$RUNTIME_USER" "$gname"
+# RUNTIME_SUPGIDS='100 101 102' or RUNTIME_SUPGIDS='200:foo 100'
+for gid_pair in $RUNTIME_SUPGIDS; do
+  # Alpine won't take a gid, it needs a name.  But the specified
+  # gid might not exist, so let it be "created if not already present, using
+  # supplied name hint".  This doesn't affect the defaults, but can impact some
+  # build-arg override values.
+  gid="${gid_pair%%:*}"
+  if gline="$(getent group "$gid")"; then
+    gname="${gline%%:*}"
+    run adduser "$RUNTIME_USER" "$gname"
+  elif [ "$gid" != "$gid_pair" ]; then
+    gname="${gid_pair#*:}"
+    run addgroup -g "$gid" "$gname"
+    run adduser "$RUNTIME_USER" "$gname"
+  else
+    die "Unknown group for supplemental GID $gid [from: $RUNTIME_SUPGIDS]"
+  fi
 done
 
 # /run is not tmpfs inside Docker by default, so provide something which
