@@ -135,8 +135,9 @@ done
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~8< User config >8~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+# There's no need to make these files unreadable by other users in the container
 for F in /tmp/etc/dot.*; do
-  install -o "${RUNTIME_USER}" -m 0600 "$F" "/home/${RUNTIME_USER}/${F##*/dot}"
+  install -o "${RUNTIME_USER}" -m 0644 "$F" "/home/${RUNTIME_USER}/${F##*/dot}"
 done
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~8< Cleanup >8~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

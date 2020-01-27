@@ -104,6 +104,7 @@ case $OSTYPE in
     # some of these based upon Ubuntu /etc/init/container-detect.conf
     [[ -n "${LIBVIRT_LXC_UUID}" ]] && container_tl+=( lxc-libvirt )
     [[ -d /proc/vz && ! -d /proc/bc ]] && container_tl+=( openvz )
+    [[ -f /usr/share/qubes/marker-vm ]] && container_tl+=( vm xen qubes )
     if [[ ${#container_tl} -eq 1 ]]; then
       _vxid=''
       if [[ -n "${ZSH_VERSION:-}" ]]; then
@@ -138,6 +139,7 @@ path=(
   ~/bin(N/)
   ~/.pyenv/shims(N/)
   ~/.pyenv/bin(N/)
+  ~/.linuxbrew/bin(N/)
   /opt/gotools/bin(N/)
   /usr/local/go/bin(N/)
   /opt/gnupg/sbin(N/) /opt/gnupg/bin(N/)
@@ -244,6 +246,7 @@ function prompt_pdp_precmd {
   elif [[ $ex -eq 127 ]]; then psvar[1]='127/CmdNotFound'         # SUSv4 XCU 2.8.2
   elif [[ $ex -eq 126 ]]; then psvar[1]='126/CmdNotExecutable'    # SUSv4 XCU 2.8.2
   elif [[ $ex -eq 125 ]]; then psvar[1]='125/GitBisectUntestable' # git
+  elif [[ $exitstatus -eq 124 ]]; then psvar[1]='124/Timeout'     # timeout(1), GNU coreutils & FreeBSD
   fi
   psvar[2]=$#jobstates; [[ $psvar[2] -eq 0 ]] && psvar[2]=''
   psvar[3]=$#dirstack; [[ $psvar[3] -eq 0 ]] && psvar[3]=''

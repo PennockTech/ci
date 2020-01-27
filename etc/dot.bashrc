@@ -79,4 +79,39 @@ fi
 
 [[ -r ~/.personal/share/container_detect.sh ]] && source ~/.personal/share/container_detect.sh
 
+# This is just a barely minimal fallback; does not include games, snaps, etc
+: "${PATH:=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin}"
+
+# This avoids shell-outs if at all possible, and is compatible with my
+# long-standing naming, not with multiarch, but that's not portable enough.
+# It's $(uname -s)-$(uname -m) but using bash vars.
+case $OSTYPE in
+(darwin*) PLATFORM="Darwin-$HOSTTYPE" ;;
+(freebsd*) PLATFORM="FreeBSD-$HOSTTYPE" ;;
+(linux-gnu) PLATFORM="Linux-$HOSTTYPE" ;;
+(*) PLATFORM="$(uname -sm)"; PLATFORM="${PLATFORM// /-}" ;;
+esac
+
+# nb: reverse order as prepending
+for b in "$HOME/.linuxbrew/bin"; do
+  [[ -d "$b" ]] || continue
+  case "$PATH" in
+  ($b:* | *:$b:* | *:$b) ;;
+  (*) PATH="$b:$PATH" ;;
+  esac
+done; unset b
+for x in "$HOME/tools/site" "$HOME/.personal/tools"; do
+  for y in common "$PLATFORM"; do
+    [[ -d "$x/$y" ]] || continue
+    case "$PATH" in
+    ($x/$y:* | *:$x/$y:* | *:$x/$y) ;;
+    (*) PATH="$x/$y:$PATH" ;;
+    esac
+  done
+done; unset x y
+
+if have_cmd zsh; then
+  alias z='exec zsh -l'
+fi
+
 # vim: set ft=sh sw=2 et :
