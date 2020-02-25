@@ -3,6 +3,11 @@ ci
 
 Continuous Integration images.
 
+**These are not for production deployments of code:
+they are large and bloated.
+These images contain Stuff We Often Need In CI Testing.
+The two use-cases are fundamentally different.**
+
 Sub-directories `docker-FOO` each contain a `Dockerfile` controlling
 the build of a Docker image.
 
@@ -61,3 +66,44 @@ of packages:
 A few config files go in too, including the aforementioned certificate trust
 stores being setup.
 
+
+Sizes
+-----
+
+I periodically update the Docker Hub description with stats on the
+(horrendously large) sizes of these images.
+They're not small.  Size is not a goal.
+
+For production deployments, Small Is Good.
+The smaller it is, the faster it transfers, the less there is to go wrong.
+The less likely it is to be evicted from cache.
+You can be small _relative to_ a large base image, as long as the base image
+truly is widely used across all the target hosts, so will already be present.
+
+My typical pattern is to use a multi-stage Dockerfile to build Go code in
+alpine, then copy it into a `FROM scratch` final image, or sometimes
+`FROM alpine` if I want to be able to SSH in.
+I expect total image sizes to be less than 20MiB,
+or less than 50MiB if Alpine is used.
+Perhaps more if there's a lot of ancillary data which for some reason belongs
+in the image instead of a distinct Volume.
+
+By contrast, these CI images take a "kitchen sink" approach.  The goal is to
+not have to think too much about what I'm depending on when writing tests:
+being able to write and run decent tests is more important than keeping the CI
+image small, and an extra minute in CI runner start-up time is not a problem.
+As long as the _build_ is small, so that it's comprehensible and easy to
+audit, I am happy.
+
+So as a rough ballpark:
+* Pastel: 30 — 40 MiB
+* Pink: 1.5 — 1.7 **GiB**
+* Purple: 2.5 — 3 **GiB**
+
+Those are insane.  I should probably abandon Pink and Purple and use Ubuntu
+images for that sort of testing.  If I'm pausing to think about it when
+writing tests, I might.  But otherwise: these are available, they work, and
+they're a consistent environment.
+
+But they're not a template for constructing an image for deployment to
+Production.  And they're not intended to be.
