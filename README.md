@@ -80,9 +80,10 @@ The less likely it is to be evicted from cache.
 You can be small _relative to_ a large base image, as long as the base image
 truly is widely used across all the target hosts, so will already be present.
 
-My typical pattern is to use a multi-stage Dockerfile to build Go code in
-alpine, then copy it into a `FROM scratch` final image, or sometimes
-`FROM alpine` if I want to be able to SSH in.
+My typical pattern is to use a multi-stage `Dockerfile` to build Go code in
+`golang:x.y.z` or `alpine:x.y`,
+then copy it into a `FROM scratch` final image in the last stage,
+or sometimes `FROM alpine` if I want to be able to SSH in.
 I expect total image sizes to be less than 20MiB,
 or less than 50MiB if Alpine is used.
 Perhaps more if there's a lot of ancillary data which for some reason belongs
