@@ -3,22 +3,32 @@
 : "${HOME_HTTP_PROXY=http://192.168.120.21:3128/}"
 : "${BUILD_SETS:=pastel:purple pink:purple purple}"
 : "${PT_DOCKER_BASETAG:=pennocktech/ci}"
+: "${HOME_DOCKER_REGISTRY=wharf.lan}"
 
 # shellcheck source=tools/lib.sh disable=SC2034
 . "$(dirname "$0")/lib.sh" "$0" "$@"
 
+docker_push_home() {
+  image="${1:?}"
+  run docker tag "$image" "$HOME_DOCKER_REGISTRY/$image"
+  run docker push "$HOME_DOCKER_REGISTRY/$image"
+}
+
 docker_build() {
   variant="${1:?}"
   directory="docker-${2:?}"
-  shift 2
+  base_tag="${3:?}"
+  shift 3
 
   run docker build \
     --build-arg "http_proxy=$HOME_HTTP_PROXY" \
     --build-arg "PT_VARIANT=$variant" \
     --file "$directory/Dockerfile" \
+    --tag "$base_tag" \
     "$@" \
     .
-  unset ci_color
+
+  docker_push_home "$base_tag"
 }
 
 seen_variants=''
@@ -34,8 +44,8 @@ for SET in $BUILD_SETS; do
     ;;
   esac
 
-  docker_build "$VARIANT" "$DIRECTORY" --tag "${PT_DOCKER_BASETAG}:${VARIANT}-root" --target rootstage
-  docker_build "$VARIANT" "$DIRECTORY" --tag "${PT_DOCKER_BASETAG}:${VARIANT}"
+  docker_build "$VARIANT" "$DIRECTORY" "${PT_DOCKER_BASETAG}:${VARIANT}-root" --target rootstage
+  docker_build "$VARIANT" "$DIRECTORY" "${PT_DOCKER_BASETAG}:${VARIANT}"
   seen_variants="${seen_variants} ${VARIANT}-root ${VARIANT}"
 done
 
