@@ -51,7 +51,7 @@ readonly KitchenSinkPackages="
   ncurses
   clang
   zip xz
-  bash zsh vim groff man
+  bash zsh vim groff mandoc
   mailcap
   docker
 "
