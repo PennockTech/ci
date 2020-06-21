@@ -28,6 +28,7 @@ shift
 # nb: busybox basename doesn't use the -s .sh form, only suffix as second
 #     non-flag param
 progname="$(basename "$top_arg0" .sh)"
+progname_full="$(basename "$top_arg0")"
 progdir="$(dirname "$top_arg0")"
 startdir="$(pwd)"
 
