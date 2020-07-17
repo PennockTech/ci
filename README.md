@@ -27,7 +27,11 @@ Alpine images derived from upstream `golang:${VERSION}-alpine` images, with a
 strictly minimal set of packages added.
 
 These images should be sufficient to build.  They will not be extended to
-include enough packages to make it easier to test or debug.
+include enough packages to make it easier to test or debug.  They do alas
+include the docker CLI to be able to talk to Docker, to build images, not just
+binaries.  Tools for building other packaging artifacts will probably not be
+added, instead a new variant will be used.
+
 
 ```console
 $ docker-gobuild/build.sh 1.14.6

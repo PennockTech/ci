@@ -26,8 +26,9 @@ ARG REPO_STATE
 
 # bash: for build scripts which use arrays
 # git: for go get
+# docker-cli: to build docker images with docker-in-docker
 RUN apk update && apk upgrade --no-cache && \
-	apk add --no-cache bash git
+	apk add --no-cache bash git docker-cli
 
 LABEL maintainer="noc+docker+ci@pennock-tech.com"
 LABEL com.pennock-tech.name="Pennock Tech Continuous Integration - ${PT_VARIANT} (root-stage)"
