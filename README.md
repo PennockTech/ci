@@ -20,6 +20,20 @@ Beware that these add my own certificate authorities to the system trust
 stores.
 
 
+docker-gobuild
+--------------
+
+Alpine images derived from upstream `golang:${VERSION}-alpine` images, with a
+strictly minimal set of packages added.
+
+These images should be sufficient to build.  They will not be extended to
+include enough packages to make it easier to test or debug.
+
+```console
+$ docker-gobuild/build.sh 1.14.6
+```
+
+
 docker-purple
 -------------
 
