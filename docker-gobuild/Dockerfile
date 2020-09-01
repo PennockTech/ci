@@ -2,7 +2,7 @@
 #
 # We provide pennocktech/ci:gobuild-${VERSION} and a -root suffix variant.
 
-ARG GOLANG_VERSION=1.14.6
+ARG GOLANG_VERSION=1.15.1
 ARG UPSTREAM_IMAGE=golang:${GOLANG_VERSION}-alpine
 ARG REPO_STATE=UNKNOWN
 
