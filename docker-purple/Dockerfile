@@ -15,8 +15,8 @@
 # Also, note that LABELs persist across inheritance boundaries, unless
 # overridden.
 
-ARG GOLANG_VERSION=1.15.1
-ARG GOLANG_SRC_SHASUM=d3743752a421881b5cc007c76b4b68becc3ad053e61275567edab1c99e154d30
+ARG GOLANG_VERSION=1.15.2
+ARG GOLANG_SRC_SHASUM=28bf9d0bcde251011caae230a4a05d917b172ea203f2a62f2c2f9533589d4b4d
 ARG PT_VARIANT=purple
 ARG RUNTIME_USER=ci
 ARG RUNTIME_GECOS='Continuous Integration'
