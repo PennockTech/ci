@@ -124,19 +124,29 @@ _stderr_coloredf() {
   fi
 }
 
+: "${PTLIB_PREFIX_SYMBOL_INFO:='✅'}"
+: "${PTLIB_PREFIX_SYMBOL_WARN:='⚠️ '}"
+: "${PTLIB_PREFIX_SYMBOL_DIE:='❌'}"
+: "${PTLIB_PREFIX_SYMBOL_V_0:='🚩'}"
+: "${PTLIB_PREFIX_SYMBOL_V_1:='🗣️'}"
+: "${PTLIB_PREFIX_SYMBOL_V_2:='🎺'}"
+: "${PTLIB_PREFIX_SYMBOL_V_3:='📢'}"
+: "${PTLIB_PREFIX_SYMBOL_V_COUNT:=3}"
+: "${PTLIB_PREFIX_SYMBOL_V_REST:='🙊'}"
+
 info() {
-  local PREFIX_SYMBOL='✅'
+  local PREFIX_SYMBOL="${PTLIB_PREFIX_SYMBOL_INFO?}"
   _stderr_colored 32 "$@"
 }
 
 warn() {
-  local PREFIX_SYMBOL='⚠️ '
+  local PREFIX_SYMBOL="${PTLIB_PREFIX_SYMBOL_WARN?}"
   _stderr_colored 31 "$@"
   bump_warn_count
 }
 
 warn_multi() {
-  local PREFIX_SYMBOL='⚠️'
+  local PREFIX_SYMBOL="${PTLIB_PREFIX_SYMBOL_WARN?}"
   local x
   for x; do
     _stderr_colored 31 "$x"
@@ -145,13 +155,13 @@ warn_multi() {
 }
 
 die() {
-  local PREFIX_SYMBOL='❌'
+  local PREFIX_SYMBOL="${PTLIB_PREFIX_SYMBOL_DIE?}"
   _stderr_colored 31 "$@"
   exit 1
 }
 
 die_multi() {
-  local PREFIX_SYMBOL='❌'
+  local PREFIX_SYMBOL="${PTLIB_PREFIX_SYMBOL_DIE?}"
   local x
   for x; do
     _stderr_colored 31 "$x"
@@ -163,13 +173,19 @@ verbose_n() {
   [ "$VERBOSE" -ge "$1" ] || return 0
   local verbosity="$1"
   shift
-  local PREFIX_SYMBOL
-  case "$verbosity" in
-  1) PREFIX_SYMBOL='🗣️ ' ;;
-  2) PREFIX_SYMBOL='🎺' ;;
-  3) PREFIX_SYMBOL='📢' ;;
-  *) PREFIX_SYMBOL='🙊' ;;
-  esac
+  local tag
+  if [ "$verbosity" -ge 0 ] && [ "$verbosity" -le "${PTLIB_PREFIX_SYMBOL_V_COUNT:?}" ]; then
+    tag="PTLIB_PREFIX_SYMBOL_V_$verbosity"
+  else
+    tag="PTLIB_PREFIX_SYMBOL_V_REST"
+  fi
+  if [ -n "${BASH_VERSION:-}" ]; then
+    local -n PREFIX_SYMBOL="$tag"
+  elif [ -n "${ZSH_VERSION:-}" ]; then
+    local PREFIX_SYMBOL="${(P)tag}"
+  else
+    local PREFIX_SYMBOL='?'
+  fi
   _stderr_colored 36 "$@"
 }
 
