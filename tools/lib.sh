@@ -223,8 +223,14 @@ report_exit() {
 }
 
 run() {
+  local prefix
   if [ -n "${NOT_REALLY:-}" ]; then
-    verbose_n 0 would invoke: "$*"
+    if [ -n "${run_state_label:-}" ]; then
+      prefix="${run_state_prelabel:-}${run_state_label:-}${run_state_postlabel:-} "
+    else
+      prefix=''
+    fi
+    verbose_n 0 "${prefix}would invoke:" "$*"
   else
     verbose_n 2 invoking: "$*"
     "$@"
