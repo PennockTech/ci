@@ -2,7 +2,7 @@
 #
 # We provide pennocktech/ci:gobuild-${VERSION} and a -root suffix variant.
 
-ARG GOLANG_VERSION=1.15.5
+ARG GOLANG_VERSION=1.16.3
 ARG UPSTREAM_IMAGE=golang:${GOLANG_VERSION}-alpine
 ARG REPO_STATE=UNKNOWN
 
@@ -27,8 +27,9 @@ ARG REPO_STATE
 # bash: for build scripts which use arrays
 # git: for go get
 # docker-cli: to build docker images with docker-in-docker
+# openssh-client: for ssh/ssh-add/ssh-agent (for cloning from private repos)
 RUN apk update && apk upgrade --no-cache && \
-	apk add --no-cache bash git docker-cli
+	apk add --no-cache bash git docker-cli openssh-client
 
 LABEL maintainer="noc+docker+ci@pennock-tech.com"
 LABEL com.pennock-tech.name="Pennock Tech Continuous Integration - ${PT_VARIANT} (root-stage)"
