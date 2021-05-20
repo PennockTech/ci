@@ -222,6 +222,10 @@ report_exit() {
   exit "${1:-0}"
 }
 
+# Tracing Functions }}}
+
+# Tracing Run Wrapping Functions {{{
+
 run() {
   local prefix
   if [ -n "${NOT_REALLY:-}" ]; then
@@ -237,7 +241,9 @@ run() {
   fi
 }
 
-# Tracing Functions }}}
+# Tracing Run Wrapping Functions }}}
+
+# Env Setup & Testing {{{
 
 : "${HOME:=/home/$(id -un)}"
 export HOME
@@ -265,6 +271,8 @@ have_cmd() {
   done
   return 1
 }
+
+# Env Setup & Testing }}}
 
 # Git Utilities {{{
 
