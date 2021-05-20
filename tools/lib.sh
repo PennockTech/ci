@@ -32,6 +32,13 @@ progname_full="$(basename "$top_arg0")"
 progdir="$(dirname "$top_arg0")"
 startdir="$(pwd)"
 
+# shell portability tests
+if [ -n "${ZSH_VERSION:-}" ] || [ -n "${BASH_VERSION:-}" ]; then
+  readonly SHHAVE_LOCAL_I=true
+else
+  readonly SHHAVE_LOCAL_I=false
+fi
+
 # Let the caller override name/path/whatever, eg to build with a different
 # version of Go.
 : "${GIT_CMD:=git}"
@@ -239,6 +246,43 @@ run() {
     verbose_n 2 invoking: "$*"
     "$@"
   fi
+}
+
+retry_n_run() {
+  if "$SHHAVE_LOCAL_I"; then
+    local -i max_runs
+    local -i iter_count=0 ev=0
+  else
+    local max_runs
+    local iter_count=0 ev=0
+  fi
+  max_runs="$1"
+  [ "$max_runs" -gt 0 ] || die "invocation error, retry_n_run first param should be positive int [got: $1]"
+  shift
+  local prefix warn_suffix
+  if [ -n "${NOT_REALLY:-}" ]; then
+    if [ -n "${run_state_label:-}" ]; then
+      prefix="${run_state_prelabel:-}${run_state_label:-}${run_state_postlabel:-} "
+    else
+      prefix=''
+    fi
+    verbose_n 0 "${prefix}would invoke:" "$*"
+    return
+  fi
+  verbose_n 2 invoking: "$*"
+  while [ "$iter_count" -lt "$max_runs" ]; do
+    ev=0
+    "$@" || ev="$?"
+    if [ "$ev" -eq 0 ]; then return 0; fi
+    iter_count=$((iter_count + 1))
+    if [ "$iter_count" -lt "$max_runs" ]; then
+      warn_suffix="try $iter_count/$max_runs - will retry"
+    else
+      warn_suffix="failed $max_runs times, aborting"
+    fi
+    warn "command failed [$ev] $1 -- $warn_suffix"
+  done
+  return "$ev"
 }
 
 # Tracing Run Wrapping Functions }}}
