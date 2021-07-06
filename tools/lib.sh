@@ -1,5 +1,5 @@
 #!/bin/echo you_should_source_me
-# shellcheck shell=sh disable=SC2034,SC2039
+# shellcheck shell=sh disable=SC2034,SC2039,SC3043
 #
 # Copyright © 2018,2019 Pennock Tech, LLC.
 # All rights reserved, except as granted under license.
@@ -19,7 +19,8 @@
 # Shellcheck disabling rationale:
 #  SC2034: we're a lib.sh, we define things which are unused herein, that's
 #          part of the point.
-#  SC2039: we use local, POSIX or not.
+#  SC2039: we use local, POSIX or not [this use-case split out into 3043]
+#  SC3043: we use local, POSIX or not [should remove SC2039 from exclude list when confident all checkers are sufficiently up-to-date]
 
 set -eu
 top_arg0="${1:?missing argv0 from caller}"
@@ -82,12 +83,12 @@ _stderr_colored() {
   #
   local color="$1"
   shift
-  if [ -n "${NOCOLOR:-}" ] && [ -n "${NOEMOJI:-}" ]; then
+  if [ -n "${NO_COLOR:-${NOCOLOR:-}}" ] && [ -n "${NO_EMOJI:-${NOEMOJI:-}}" ]; then
     printf >&2 '%s: %s\n' "$progname" "$*"
-  elif [ -n "${NOEMOJI:-}" ]; then
+  elif [ -n "${NO_EMOJI:-${NOEMOJI:-}}" ]; then
     # shellcheck disable=SC1117
     printf >&2 "\033[${color}m%s: \033[1m%s\033[0m\n" "$progname" "$*"
-  elif [ -n "${NOCOLOR:-}" ]; then
+  elif [ -n "${NO_COLOR:-${NOCOLOR:-}}" ]; then
     # shellcheck disable=SC1117
     printf >&2 "${PREFIX_SYMBOL:-}${PREFIX_SYMBOL:+ }%s: %s\n" "$progname" "$*"
   else
@@ -105,18 +106,18 @@ _stderr_coloredf() {
   #
   local color="$1"
   shift
-  if [ -n "${NOCOLOR:-}" ] && [ -n "${NOEMOJI:-}" ]; then
+  if [ -n "${NO_COLOR:-${NOCOLOR:-}}" ] && [ -n "${NO_EMOJI:-${NOEMOJI:-}}" ]; then
     printf >&2 '%s: ' "$progname"
     # shellcheck disable=SC2059
     printf >&2 "$@"
     printf >&2 '\n'
-  elif [ -n "${NOEMOJI:-}" ]; then
+  elif [ -n "${NO_EMOJI:-${NOEMOJI:-}}" ]; then
     # shellcheck disable=SC1117
     printf >&2 "\033[${color}m%s: \033[1m" "${progname}"
     # shellcheck disable=SC2059
     printf >&2 "$@"
     printf >&2 '\033[0m\n'
-  elif [ -n "${NOCOLOR:-}" ]; then
+  elif [ -n "${NO_COLOR:-${NOCOLOR:-}}" ]; then
     # shellcheck disable=SC1117
     printf >&2 "${PREFIX_SYMBOL:-}${PREFIX_SYMBOL:+ }%s: " "$progname"
     # shellcheck disable=SC2059
