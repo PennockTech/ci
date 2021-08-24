@@ -230,6 +230,17 @@ report_exit() {
   exit "${1:-0}"
 }
 
+case $TERM in
+(putty|xterm*)
+  xtitle() { printf >/dev/tty '\e]2;%s\a' "$*"; }
+  xtitlef() { local p="${1:?}"; shift; printf >/dev/tty '\e]2;'"$p"'\a' "$@"; }
+  ;;
+(*)
+  xtitle() { : ; }
+  xtitlef() { : ; }
+  ;;
+esac
+
 # Tracing Functions }}}
 
 # Tracing Run Wrapping Functions {{{
