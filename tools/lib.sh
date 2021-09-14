@@ -231,7 +231,7 @@ report_exit() {
 }
 
 case $TERM in
-(putty|xterm*)
+(putty|screen*|xterm*)
   xtitle() { printf >/dev/tty '\e]2;%s\a' "$*"; }
   xtitlef() { local p="${1:?}"; shift; printf >/dev/tty '\e]2;'"$p"'\a' "$@"; }
   ;;
