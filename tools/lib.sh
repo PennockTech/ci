@@ -313,20 +313,30 @@ LOCAL_OS="$(uname)"
 : "${DOCKER_GOOS:=linux}"
 export DOCKER_GOOS
 
-have_cmd() {
-  local p oIFS c
-  c="$1"
-  shift
-  oIFS="$IFS"
-  IFS=":"
-  # shellcheck disable=SC2086
-  set $PATH
-  IFS="$oIFS"
-  for p; do
-    [ -x "$p/$c" ] && return 0
-  done
-  return 1
-}
+if [ -n "${ZSH_VERSION:-}" ]; then
+  if zmodload zsh/parameter; then
+    have_cmd() { (( $+commands[$1] )) }
+  else
+    have_cmd() { whence -p "$1" >/dev/null; }
+  fi
+elif [ -n "${BASH_VERSION:-}" ]; then
+  have_cmd() { type -P "$1" >/dev/null; }
+else
+  have_cmd() {
+    local p oIFS c
+    c="$1"
+    shift
+    oIFS="$IFS"
+    IFS=":"
+    # shellcheck disable=SC2086
+    set $PATH
+    IFS="$oIFS"
+    for p; do
+      [ -x "$p/$c" ] && return 0
+    done
+    return 1
+  }
+fi
 
 # Env Setup & Testing }}}
 
