@@ -315,7 +315,7 @@ export DOCKER_GOOS
 
 if [ -n "${ZSH_VERSION:-}" ]; then
   if zmodload zsh/parameter; then
-    have_cmd() { (( $+commands[$1] )) }
+    have_cmd() { (( $+commands[$1] )); }
   else
     have_cmd() { whence -p "$1" >/dev/null; }
   fi
