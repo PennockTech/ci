@@ -326,20 +326,8 @@ if [ -n "${ZSH_VERSION:-}" ]; then
 elif [ -n "${BASH_VERSION:-}" ]; then
   have_cmd() { type -P "$1" >/dev/null; }
 else
-  have_cmd() {
-    local p oIFS c
-    c="$1"
-    shift
-    oIFS="$IFS"
-    IFS=":"
-    # shellcheck disable=SC2086
-    set $PATH
-    IFS="$oIFS"
-    for p; do
-      [ -x "$p/$c" ] && return 0
-    done
-    return 1
-  }
+  # command -v is in modern POSIX
+  have_cmd() { command -v "$1" >/dev/null; }
 fi
 
 # Env Setup & Testing }}}
