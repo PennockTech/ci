@@ -1,18 +1,23 @@
 #!/bin/echo you_should_source_me
 # shellcheck shell=sh disable=SC2034,SC2039,SC3043
 #
-# Copyright © 2018,2019 Pennock Tech, LLC.
+# Copyright © 2018,2019,2020,2021 Pennock Tech, LLC.
 # All rights reserved, except as granted under license.
 # Licensed per file LICENSE.txt
 
 # Correct sourcing, for scripts in same directory:
 #
+#   top_arg0="$0"
+#   # shellcheck source=tools/lib.sh
+#   . "$(dirname "$0")/lib.sh"
+#
+# If using bash/zsh/most shells (but not dash) then:
+#
 #   # shellcheck source=tools/lib.sh
 #   . "$(dirname "$0")/lib.sh" "$0" "$@"
 #
-# If /bin/sh is dash, then the script will need to be bash or other "slightly
-# more than POSIX" shell.  We only expect: `local` to work, and `source` to
-# pass along arguments.
+# We expect, beyond POSIX:
+#  * The 'local' builtin to exist and work
 
 # This file exists in PT's CI & Packer repos, as lib.sh in appropriate places.
 
@@ -23,8 +28,13 @@
 #  SC3043: we use local, POSIX or not [should remove SC2039 from exclude list when confident all checkers are sufficiently up-to-date]
 
 set -eu
-top_arg0="${1:?missing argv0 from caller}"
-shift
+if [ -n "${top_arg0:-}" ]; then
+  # caller is using a shell which doesn't pass params to source, so their argv is our argv
+  true
+else
+  top_arg0="${1:?missing argv0 from caller}"
+  shift
+fi
 
 # nb: busybox basename doesn't use the -s .sh form, only suffix as second
 #     non-flag param
