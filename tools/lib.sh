@@ -45,8 +45,10 @@ startdir="$(pwd)"
 
 # shell portability tests
 if [ -n "${ZSH_VERSION:-}" ] || [ -n "${BASH_VERSION:-}" ]; then
+  readonly SHHAVE_DECLARE=true
   readonly SHHAVE_LOCAL_I=true
 else
+  readonly SHHAVE_DECLARE=false
   readonly SHHAVE_LOCAL_I=false
 fi
 
@@ -69,6 +71,23 @@ egrep() { LC_ALL=C GREP_OPTIONS='' command "$GREP_CMD" -E "$@"; }
 fgrep() { LC_ALL=C GREP_OPTIONS='' command "$GREP_CMD" -F "$@"; }
 
 # Wrapper functions for overridden commands }}}
+
+# Color/colour support {{{
+
+if $SHHAVE_DECLARE; then
+  declare -i want_color_int
+fi
+want_color_int=0
+if [ -n "${CLICOLOR_FORCE:-}" ] && [ "$CLICOLOR_FORCE" != "0" ]; then
+  want_color_int=1
+elif [ -n "${CLICOLOR:-}" ] && [ "$CLICOLOR" != "0" ] && [ -t 1 ]; then
+  want_color_int=1
+fi
+if [ -n "${NO_COLOR:-${NOCOLOR:-}}" ]; then
+  want_color_int=0
+fi
+
+# Color/colour support }}}
 
 # Tracing Functions {{{
 
@@ -93,12 +112,12 @@ _stderr_colored() {
   #
   local color="$1"
   shift
-  if [ -n "${NO_COLOR:-${NOCOLOR:-}}" ] && [ -n "${NO_EMOJI:-${NOEMOJI:-}}" ]; then
+  if [ $want_color_int -eq 0 ] && [ -n "${NO_EMOJI:-${NOEMOJI:-}}" ]; then
     printf >&2 '%s: %s\n' "$progname" "$*"
   elif [ -n "${NO_EMOJI:-${NOEMOJI:-}}" ]; then
     # shellcheck disable=SC1117
     printf >&2 "\033[${color}m%s: \033[1m%s\033[0m\n" "$progname" "$*"
-  elif [ -n "${NO_COLOR:-${NOCOLOR:-}}" ]; then
+  elif [ $want_color_int -eq 0 ]; then
     # shellcheck disable=SC1117
     printf >&2 "${PREFIX_SYMBOL:-}${PREFIX_SYMBOL:+ }%s: %s\n" "$progname" "$*"
   else
