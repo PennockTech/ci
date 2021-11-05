@@ -322,17 +322,20 @@ run() {
   fi
 }
 
-retry_n_run() {
+retry_n_run() { retry_whileexit_e_n_run -1 "$@"; }
+
+retry_whileexit_e_n_run() {
   if "$SHHAVE_LOCAL_I"; then
-    local -i max_runs
+    local -i max_runs retry_on_exitstatus
     local -i iter_count=0 ev=0
   else
-    local max_runs
+    local max_runs retry_on_exitstatus
     local iter_count=0 ev=0
   fi
-  max_runs="$1"
+  retry_on_exitstatus="$1"
+  max_runs="$2"
   [ "$max_runs" -gt 0 ] || die "invocation error, retry_n_run first param should be positive int [got: $1]"
-  shift
+  shift 2
   local prefix warn_suffix
   if [ -n "${NOT_REALLY:-}" ]; then
     if [ -n "${run_state_label:-}" ]; then
@@ -347,7 +350,12 @@ retry_n_run() {
   while [ "$iter_count" -lt "$max_runs" ]; do
     ev=0
     "$@" || ev="$?"
-    if [ "$ev" -eq 0 ]; then return 0; fi
+    if [ "$ev" -eq 0 ] && [ "$retry_on_exitstatus" -ne 0 ]; then return 0; fi
+    # To retry _always_, call with the guard as -1
+    if [ "$retry_on_exitstatus" -ge 0 ] && [ "$ev" -ne "$retry_on_exitstatus" ]; then
+      warn "command failed [$ev] $1 -- only retrying if exits [$retry_on_exitstatus], aborting"
+      return "$ev"
+    fi
     iter_count=$((iter_count + 1))
     if [ "$iter_count" -lt "$max_runs" ]; then
       warn_suffix="try $iter_count/$max_runs - will retry"
