@@ -75,6 +75,8 @@ fgrep() { LC_ALL=C GREP_OPTIONS='' command "$GREP_CMD" -F "$@"; }
 # Color/colour support {{{
 
 if $SHHAVE_DECLARE; then
+  # We're guarded against shell not having declare, so:
+  # shellcheck disable=SC3044
   declare -i want_color_int
 fi
 want_color_int=0
@@ -193,8 +195,18 @@ warn_multi() {
 
 die() {
   local PREFIX_SYMBOL="${PTLIB_PREFIX_SYMBOL_DIE?}"
+  [ $# -ge 1 ] || set -- "dying for unknown reason"
   _stderr_colored 31 "$@"
   exit 1
+}
+
+die_n() {
+  local ev="${1:?need an exit value}"
+  shift
+  [ $# -ge 1 ] || set -- "dying for unknown reason"
+  local PREFIX_SYMBOL="${PTLIB_PREFIX_SYMBOL_DIE?}"
+  _stderr_colored 31 "$@"
+  exit "$ev"
 }
 
 die_multi() {
@@ -260,12 +272,19 @@ report_exit() {
 }
 
 case $TERM in
+  # NB: shellcheck SC2059 is about using variables in printf strings ...
+  # which is exactly the point of the xtitlef function: the *f variant
+  # takes a format string as a parameter.
 (putty|xterm*)
   xtitle() { printf >/dev/tty '\e]2;%s\a' "$*"; }
+  # shellcheck disable=SC2059
   xtitlef() { local p="${1:?}"; shift; printf >/dev/tty '\e]2;'"$p"'\a' "$@"; }
   ;;
 (screen*)
+  # Don't care about return value or less than ideal title
+  # shellcheck disable=SC2155
   xtitle() { local t="$(printf '%s\n' "$*" | tr -cd 'A-Za-z0-9.,:;!@#$%^&*()[]{}|~_+-- ')"; printf >/dev/tty '\e]2;%s\a' "$t"; }
+  # shellcheck disable=SC2059
   xtitlef() { local p="${1:?}"; shift; printf >/dev/tty '\e]2;'"$p"'\a' "$@"; }
   ;;
 (*)
@@ -346,13 +365,17 @@ LOCAL_OS="$(uname)"
 : "${DOCKER_GOOS:=linux}"
 export DOCKER_GOOS
 
+# In this block, unless stated otherwise, shellcheck disables are for portability
+# complaints about code which we're portability-guarding.
 if [ -n "${ZSH_VERSION:-}" ]; then
   if zmodload zsh/parameter; then
+    # shellcheck disable=SC3006,SC2154
     have_cmd() { (( $+commands[$1] )); }
   else
     have_cmd() { whence -p "$1" >/dev/null; }
   fi
 elif [ -n "${BASH_VERSION:-}" ]; then
+  # shellcheck disable=SC3045
   have_cmd() { type -P "$1" >/dev/null; }
 else
   # command -v is in modern POSIX
