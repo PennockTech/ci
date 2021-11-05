@@ -60,6 +60,16 @@ fi
 : "${GREP_CMD:=grep}"
 : "${GPG_CMD:=gpg}"
 
+# Standard exit code values {{{
+# sysexits.h (I mostly use EX_USAGE in my code)
+readonly EX_USAGE=64 EX_DATAERR=65 EX_NOINPUT=66 EX_NOUSER=67 EX_NOHOST=68 EX_UNAVAILABLE=69 EX_SOFTWARE=70
+readonly EX_OSERR=71 EX_OSFILE=72 EX_CANTCREAT=73 EX_IOERR=74 EX_TEMPFAIL=75 EX_PROTOCOL=76 EX_NOPERM=77 EX_CONFIG=78
+# SUSv4 XCU 2.8.2
+readonly EX_CMD_NOT_EXECUTABLE=126 EX_CMD_NOT_FOUND=127
+# Common
+readonly EX_TIMEOUT=124
+# Standard exit code values }}}
+
 # Wrapper functions for overridden commands {{{
 git() { command "$GIT_CMD" "$@"; }
 go() { command "$GO_CMD" "$@"; }
