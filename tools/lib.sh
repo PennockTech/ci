@@ -307,18 +307,37 @@ esac
 
 # Tracing Run Wrapping Functions {{{
 
+# `run a -b c` invokes `a -b c` unless $NOT_REALLY; it has various messaging options
+# To permit those messages to be seen even while the command itself is run with stdio
+# redirected, run optionally starts with `-tune` flags, before the actual command.
 run() {
-  local prefix
+  local prefix='' suffix_msg=''
+  local close_all=false close_stderr=false
+  while [ "$#" -gt 0 ]; do
+    case "${1:?need something to run}" in
+      # known bug/limitation here that I'm not bothering to collect multiple messages
+      -nostderr) shift; close_stderr=true; suffix_msg='No stderr' ;;
+      -noio) shift; close_all=true; suffix_msg='No I/O' ;;
+      --) shift; break ;;
+      *) break ;;
+    esac
+  done
+  suffix_msg="${suffix_msg:+[}${suffix_msg:-}${suffix_msg:+]}"
+  : "${1:?need something to run}"
   if [ -n "${NOT_REALLY:-}" ]; then
     if [ -n "${run_state_label:-}" ]; then
       prefix="${run_state_prelabel:-}${run_state_label:-}${run_state_postlabel:-} "
-    else
-      prefix=''
     fi
-    verbose_n 0 "${prefix}would invoke:" "$*"
+    verbose_n 0 "${prefix}would invoke:" "$*" "$suffix_msg"
   else
     verbose_n 2 invoking: "$*"
-    "$@"
+    if $close_all; then
+      "$@" </dev/null >/dev/null 2>&1
+    elif $close_stderr; then
+      "$@" 2>/dev/null
+    else
+      "$@"
+    fi
   fi
 }
 
