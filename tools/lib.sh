@@ -281,27 +281,32 @@ report_exit() {
   exit "${1:-0}"
 }
 
-case $TERM in
-  # NB: shellcheck SC2059 is about using variables in printf strings ...
-  # which is exactly the point of the xtitlef function: the *f variant
-  # takes a format string as a parameter.
-(putty|xterm*)
-  xtitle() { printf >/dev/tty '\e]2;%s\a' "$*"; }
-  # shellcheck disable=SC2059
-  xtitlef() { local p="${1:?}"; shift; printf >/dev/tty '\e]2;'"$p"'\a' "$@"; }
-  ;;
-(screen*)
-  # Don't care about return value or less than ideal title
-  # shellcheck disable=SC2155
-  xtitle() { local t="$(printf '%s\n' "$*" | tr -cd 'A-Za-z0-9.,:;!@#$%^&*()[]{}|~_+-- ')"; printf >/dev/tty '\e]2;%s\a' "$t"; }
-  # shellcheck disable=SC2059
-  xtitlef() { local p="${1:?}"; shift; printf >/dev/tty '\e]2;'"$p"'\a' "$@"; }
-  ;;
-(*)
+if [ -n "${NO_TERMTITLE:-${NO_XTITLE:-}}" ]; then
   xtitle() { : ; }
   xtitlef() { : ; }
-  ;;
-esac
+else
+  case $TERM in
+    # NB: shellcheck SC2059 is about using variables in printf strings ...
+    # which is exactly the point of the xtitlef function: the *f variant
+    # takes a format string as a parameter.
+  (putty|xterm*)
+    xtitle() { printf >/dev/tty '\e]2;%s\a' "$*"; }
+    # shellcheck disable=SC2059
+    xtitlef() { local p="${1:?}"; shift; printf >/dev/tty '\e]2;'"$p"'\a' "$@"; }
+    ;;
+  (screen*)
+    # Don't care about return value or less than ideal title
+    # shellcheck disable=SC2155
+    xtitle() { local t="$(printf '%s\n' "$*" | tr -cd 'A-Za-z0-9.,:;!@#$%^&*()[]{}|~_+-- ')"; printf >/dev/tty '\e]2;%s\a' "$t"; }
+    # shellcheck disable=SC2059
+    xtitlef() { local p="${1:?}"; shift; printf >/dev/tty '\e]2;'"$p"'\a' "$@"; }
+    ;;
+  (*)
+    xtitle() { : ; }
+    xtitlef() { : ; }
+    ;;
+  esac
+fi
 
 # Tracing Functions }}}
 
