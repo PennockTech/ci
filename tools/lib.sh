@@ -407,6 +407,19 @@ local_GOPATH="${GOPATH:-${HOME}/go}"
 firstGopath="${local_GOPATH%%:*}"
 
 LOCAL_OS="$(uname)"
+LOCAL_OS_LOWER="$(printf '%s' "$LOCAL_OS" | tr A-Z a-z)"
+LOCAL_ARCH="$(arch || uname -m)"
+case "$LOCAL_ARCH" in
+  x86_64) GOCOMPAT_ARCH=amd64 ;;
+  aarch64) GOCOMPAT_ARCH=arm64 ;;
+  # armv7l is for RPi; Go itself distributes armv6l as a variant, but which we need for any given package varies a lot more
+  *) GOCOMPAT_ARCH="$LOCAL_ARCH" ;;
+esac
+# Stuff written in Go will have release artifacts _typically_ named with one or
+# the other of these two variants:
+WANT_OS_ARCH_DASH="${LOCAL_OS_LOWER}-${GOCOMPAT_ARCH}"
+WANT_OS_ARCH_US="${LOCAL_OS_LOWER}_${GOCOMPAT_ARCH}"
+
 : "${DOCKER_GOOS:=linux}"
 export DOCKER_GOOS
 
