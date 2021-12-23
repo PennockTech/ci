@@ -185,12 +185,12 @@ _stderr_coloredf() {
 
 info() {
   local PREFIX_SYMBOL="${PTLIB_PREFIX_SYMBOL_INFO?}"
-  _stderr_colored 32 "$@"
+  _stderr_colored "${PTLIB_COLOR_INFO:-32}" "$@"
 }
 
 warn() {
   local PREFIX_SYMBOL="${PTLIB_PREFIX_SYMBOL_WARN?}"
-  _stderr_colored 31 "$@"
+  _stderr_colored "${PTLIB_COLOR_WARN:-31}" "$@"
   bump_warn_count
 }
 
@@ -198,7 +198,7 @@ warn_multi() {
   local PREFIX_SYMBOL="${PTLIB_PREFIX_SYMBOL_WARN?}"
   local x
   for x; do
-    _stderr_colored 31 "$x"
+    _stderr_colored "${PTLIB_COLOR_WARN:-31}" "$x"
   done
   bump_warn_count
 }
@@ -206,7 +206,7 @@ warn_multi() {
 die() {
   local PREFIX_SYMBOL="${PTLIB_PREFIX_SYMBOL_DIE?}"
   [ $# -ge 1 ] || set -- "dying for unknown reason"
-  _stderr_colored 31 "$@"
+  _stderr_colored "${PTLIB_COLOR_DIE:-31}" "$@"
   exit 1
 }
 
@@ -215,7 +215,7 @@ die_n() {
   shift
   [ $# -ge 1 ] || set -- "dying for unknown reason"
   local PREFIX_SYMBOL="${PTLIB_PREFIX_SYMBOL_DIE?}"
-  _stderr_colored 31 "$@"
+  _stderr_colored "${PTLIB_COLOR_DIE:-31}" "$@"
   exit "$ev"
 }
 
@@ -223,7 +223,7 @@ die_multi() {
   local PREFIX_SYMBOL="${PTLIB_PREFIX_SYMBOL_DIE?}"
   local x
   for x; do
-    _stderr_colored 31 "$x"
+    _stderr_colored "${PTLIB_COLOR_DIE:-31}" "$x"
   done
   exit 1
 }
@@ -261,7 +261,7 @@ warn_setup_repeat_at_exit() {
 repeat_at_exit_warn() {
   [ -n "$warn_repeat_at_exit_file" ] || warn_setup_repeat_at_exit
   warn "$@"
-  _stderr_colored 31 "$@" 2>>"$warn_repeat_at_exit_file"
+  _stderr_colored "${PTLIB_COLOR_WARN:-31}" "$@" 2>>"$warn_repeat_at_exit_file"
 }
 
 # call "report_exit -0" to exit 1 if warnings, else 0
