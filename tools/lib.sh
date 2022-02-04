@@ -47,9 +47,13 @@ startdir="$(pwd)"
 if [ -n "${ZSH_VERSION:-}" ] || [ -n "${BASH_VERSION:-}" ]; then
   readonly SHHAVE_DECLARE=true
   readonly SHHAVE_LOCAL_I=true
+  # the eval should keep other shells from even seeing this syntax
+  eval "readonly TAB=$'\t'"
 else
   readonly SHHAVE_DECLARE=false
   readonly SHHAVE_LOCAL_I=false
+  oIFS="$IFS";IFS=' ';TAB="$(echo : | tr : '\t')";IFS="$oIFS"; unset oIFS
+  readonly TAB
 fi
 
 # Let the caller override name/path/whatever, eg to build with a different
