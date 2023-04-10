@@ -512,4 +512,23 @@ download_to_tmp_sha256() {
 
 # Retrieval Utilities }}}
 
+# Tool usage and availability {{{
+
+have_all_commands() {
+  local cmd
+  local -i okay=0
+  for cmd; do
+    if have_cmd "$cmd"; then
+      verbose_n 2 "have command: $cmd"
+      continue
+    fi
+    okay=1
+    warn "missing command: $cmd"
+  done
+
+  return $okay
+}
+
+# Tool usage and availability }}}
+
 # vim: set foldmethod=marker :
