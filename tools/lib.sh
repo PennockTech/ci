@@ -362,7 +362,7 @@ retry_whileexit_e_n_run() {
   fi
   retry_on_exitstatus="$1"
   max_runs="$2"
-  [ "$max_runs" -gt 0 ] || die "invocation error, retry_n_run first param should be positive int [got: $1]"
+  [ "$max_runs" -gt 0 ] || die "invocation error, retry_whileexit_e_n_run second param should be positive int [got: $2]"
   shift 2
   local prefix warn_suffix
   if [ -n "${NOT_REALLY:-}" ]; then
