@@ -389,7 +389,7 @@ retry_whileexit_e_n_run() {
     fi
     iter_count=$((iter_count + 1))
     if [ "$iter_count" -lt "$max_runs" ]; then
-      warn_suffix="try $iter_count/$max_runs - will retry"
+      warn_suffix="was try $iter_count/$max_runs - will retry"
     else
       warn_suffix="failed $max_runs times, aborting"
     fi
