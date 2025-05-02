@@ -136,9 +136,11 @@ _stderr_colored() {
   elif [ $want_color_int -eq 0 ]; then
     # shellcheck disable=SC1117
     printf >&2 "${PREFIX_SYMBOL:-}${PREFIX_SYMBOL:+ }%s: %s\n" "$progname" "$*"
+    # this one won't have aligned correctly, but I take "no color" to mean "no other ANSI escape sequences either"
   else
     # shellcheck disable=SC1117
-    printf >&2 "${PREFIX_SYMBOL:-}${PREFIX_SYMBOL:+ }\033[${color}m%s: \033[1m%s\033[0m\n" "$progname" "$*"
+    printf >&2 "${PREFIX_SYMBOL:-}${PREFIX_SYMBOL:+ \033[4G}\033[${color}m%s: \033[1m%s\033[0m\n" "$progname" "$*"
+    # The \e[4G moves us to column 4, which means that display width issues regarding the emoji don't matter.
   fi
 }
 
@@ -165,12 +167,14 @@ _stderr_coloredf() {
   elif [ -n "${NO_COLOR:-${NOCOLOR:-}}" ]; then
     # shellcheck disable=SC1117
     printf >&2 "${PREFIX_SYMBOL:-}${PREFIX_SYMBOL:+ }%s: " "$progname"
+    # this one won't have aligned correctly, but I take "no color" to mean "no other ANSI escape sequences either"
     # shellcheck disable=SC2059
     printf >&2 "$@"
     printf >&2 '\n'
   else
     # shellcheck disable=SC1117
-    printf >&2 "${PREFIX_SYMBOL:-}${PREFIX_SYMBOL:+ }\033[${color}m%s: \033[1m" "$progname"
+    printf >&2 "${PREFIX_SYMBOL:-}${PREFIX_SYMBOL:+ \033[4G}\033[${color}m%s: \033[1m" "$progname"
+    # the \e[4G moves us to column 4, which means that display width issues regarding the emoji don't matter.
     # shellcheck disable=SC2059
     printf >&2 "$@"
     printf >&2 '\033[0m\n'
