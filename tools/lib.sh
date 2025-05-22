@@ -416,7 +416,7 @@ firstGopath="${local_GOPATH%%:*}"
 
 LOCAL_OS="$(uname)"
 LOCAL_OS_LOWER="$(printf '%s' "$LOCAL_OS" | tr A-Z a-z)"
-LOCAL_ARCH="$(arch || uname -m)"
+LOCAL_ARCH="$(arch 2>/dev/null || uname -m)"
 case "$LOCAL_ARCH" in
   x86_64) GOCOMPAT_ARCH=amd64 ;;
   aarch64) GOCOMPAT_ARCH=arm64 ;;
