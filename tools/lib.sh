@@ -48,12 +48,15 @@ if [ -n "${ZSH_VERSION:-}" ] || [ -n "${BASH_VERSION:-}" ]; then
   readonly SHHAVE_DECLARE=true
   readonly SHHAVE_LOCAL_I=true
   # the eval should keep other shells from even seeing this syntax
-  eval "readonly TAB=$'\t'"
+  eval "readonly TAB=$'\t' TERM_CSI=$'\033['"
 else
   readonly SHHAVE_DECLARE=false
   readonly SHHAVE_LOCAL_I=false
-  oIFS="$IFS";IFS=' ';TAB="$(echo : | tr : '\t')";IFS="$oIFS"; unset oIFS
-  readonly TAB
+  oIFS="$IFS";IFS=' '
+  TAB="$(echo : | tr : '\t')"
+  TERM_CSI="$(echo ':[' | tr : '\033')"
+  IFS="$oIFS"; unset oIFS
+  readonly TAB TERM_CSI
 fi
 
 # Let the caller override name/path/whatever, eg to build with a different
@@ -138,9 +141,11 @@ _stderr_colored() {
     printf >&2 "${PREFIX_SYMBOL:-}${PREFIX_SYMBOL:+ }%s: %s\n" "$progname" "$*"
     # this one won't have aligned correctly, but I take "no color" to mean "no other ANSI escape sequences either"
   else
+    # We use TERM_CSI here to keep vim from getting confused.  It doesn't like \033[ inside the :+ expansion replacement text.
     # shellcheck disable=SC1117
-    printf >&2 "${PREFIX_SYMBOL:-}${PREFIX_SYMBOL:+ \033[4G}\033[${color}m%s: \033[1m%s\033[0m\n" "$progname" "$*"
+    printf >&2 "${PREFIX_SYMBOL:-}${PREFIX_SYMBOL:+ ${TERM_CSI}4G}${TERM_CSI}${color}m%s: ${TERM_CSI}1m%s${TERM_CSI}0m\n" "$progname" "$*"
     # The \e[4G moves us to column 4, which means that display width issues regarding the emoji don't matter.
+    # We use \[ to pass through
   fi
 }
 
@@ -160,10 +165,10 @@ _stderr_coloredf() {
     printf >&2 '\n'
   elif [ -n "${NO_EMOJI:-${NOEMOJI:-}}" ]; then
     # shellcheck disable=SC1117
-    printf >&2 "\033[${color}m%s: \033[1m" "${progname}"
+    printf >&2 "${TERM_CSI}${color}m%s: ${TERM_CSI}1m" "${progname}"
     # shellcheck disable=SC2059
     printf >&2 "$@"
-    printf >&2 '\033[0m\n'
+    printf >&2 "${TERM_CSI}0m\n"
   elif [ -n "${NO_COLOR:-${NOCOLOR:-}}" ]; then
     # shellcheck disable=SC1117
     printf >&2 "${PREFIX_SYMBOL:-}${PREFIX_SYMBOL:+ }%s: " "$progname"
@@ -173,11 +178,11 @@ _stderr_coloredf() {
     printf >&2 '\n'
   else
     # shellcheck disable=SC1117
-    printf >&2 "${PREFIX_SYMBOL:-}${PREFIX_SYMBOL:+ \033[4G}\033[${color}m%s: \033[1m" "$progname"
+    printf >&2 "${PREFIX_SYMBOL:-}${PREFIX_SYMBOL:+ ${TERM_CSI}4G}${TERM_CSI}${color}m%s: ${TERM_CSI}1m" "$progname"
     # the \e[4G moves us to column 4, which means that display width issues regarding the emoji don't matter.
     # shellcheck disable=SC2059
     printf >&2 "$@"
-    printf >&2 '\033[0m\n'
+    printf >&2 "${TERM_CSI}0m\n"
   fi
 }
 
@@ -293,21 +298,16 @@ if [ -n "${NO_TERMTITLE:-${NO_XTITLE:-}}" ]; then
   xtitle() { : ; }
   xtitlef() { : ; }
 else
+  readonly XTITLE_ALLOWED_CHARS='A-Za-z0-9.,:;!@#$%^&*()[]{}|~_+-- '
   case $TERM in
     # NB: shellcheck SC2059 is about using variables in printf strings ...
     # which is exactly the point of the xtitlef function: the *f variant
     # takes a format string as a parameter.
-  (putty|xterm*)
-    xtitle() { printf >/dev/tty '\e]2;%s\a' "$*"; }
-    # shellcheck disable=SC2059
-    xtitlef() { local p="${1:?}"; shift; printf >/dev/tty '\e]2;'"$p"'\a' "$@"; }
-    ;;
-  (screen*)
-    # Don't care about return value or less than ideal title
+  (putty | xterm* | screen*)
     # shellcheck disable=SC2155
-    xtitle() { local t="$(printf '%s\n' "$*" | tr -cd 'A-Za-z0-9.,:;!@#$%^&*()[]{}|~_+-- ')"; printf >/dev/tty '\e]2;%s\a' "$t"; }
+    xtitle() { local t="$(printf '%s\n' "$*" | sed "s/${TERM_CSI}[0-9;]*m//g" | tr -cd "$XTITLE_ALLOWED_CHARS")"; printf >/dev/tty '\e]2;%s\a' "$t"; }
     # shellcheck disable=SC2059
-    xtitlef() { local p="${1:?}"; shift; printf >/dev/tty '\e]2;'"$p"'\a' "$@"; }
+    xtitlef() { local t p="${1:?}"; shift; t="$(printf "$p\n" "$@" | sed "s/${TERM_CSI}[0-9;]*m//g" | tr -cd "$XTITLE_ALLOWED_CHARS")"; printf >/dev/tty '\e]2;%s\a' "$t"; printf ':«%s»\n' "$t"; }
     ;;
   (*)
     xtitle() { : ; }
